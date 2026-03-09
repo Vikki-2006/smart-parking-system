@@ -37,9 +37,13 @@ smart-parking-system/
 ## 📸 Project Screenshots
 
 ### 🔐 Login Page
+
 <img width="900" alt="Login Page" src="https://github.com/user-attachments/assets/384ba845-3404-476d-ad0c-1be0e59c8806" />
+
 ### 📊 Dashboard
+
 <img width="900" src="https://github.com/user-attachments/assets/03cc26b8-7754-4097-8aba-a77c44270687"/>
+
 
 
 
