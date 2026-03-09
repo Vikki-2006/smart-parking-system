@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code - Smart Parking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="dark-theme">
+    <div class="login-container led-box" style="max-width: 600px; padding: 40px;">
+        <h1 class="led-text"
+            style="color: var(--led-green); text-shadow: 0 0 10px var(--led-green); margin-bottom: 20px;">ACCESS GRANTED
+        </h1>
+        <p
+            style="color: var(--led-blue); margin-bottom: 25px; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px;">
+            Barrier Opening...</p>
+
+        <div class="success-msg"
+            style="font-size: 2rem; margin-bottom: 30px; font-weight: bold; padding: 20px; border-width: 2px;">
+            PROCEED TO SLOT {{ slot.id }}
+        </div>
+
+        <div
+            style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 30px; text-align: left;">
+            <div style="color: var(--text-dim); margin-bottom: 10px; font-size: 1.5rem;">
+                <span style="color: #fff;">Vehicle:</span> {{ slot.car_number }}
+            </div>
+            <div style="color: var(--text-dim); font-size: 1.5rem;">
+                <span style="color: #fff;">Entry Time:</span> {{ slot.entry_time }}
+            </div>
+        </div>
+
+        <p style="color: var(--led-yellow); margin-bottom: 15px; font-size: 1.3rem; font-weight: bold;">SCAN QR FOR MAP
+            DIRECTIONS</p>
+        <div style="background: white; padding: 15px; border-radius: 8px; display: inline-block; margin-bottom: 30px;">
+            <img src="{{ url_for('qr_image', session_id=slot.session_id) }}" alt="QR Code"
+                style="width: 250px; height: 250px;">
+        </div>
+
+        <a href="/dashboard" class="led-btn sm"
+            style="display: block; width: 100%; font-size: 1.3rem; padding: 15px;">BACK TO TERMINAL</a>
+    </div>
+</body>
+
+</html>

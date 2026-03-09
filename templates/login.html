@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Smart Parking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="dark-theme">
+    <div class="login-container led-box">
+        <h1 class="led-text">TERMINAL LOGIN</h1>
+        {% if error %}
+        <div class="error-msg" style="margin-bottom: 20px;">{{ error }}</div>
+        {% endif %}
+        <form method="POST" action="/admin">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" class="led-btn blue"
+                style="border-color: var(--led-blue); color: var(--led-blue);">ACCESS TERMINAL</button>
+        </form>
+    </div>
+</body>
+
+</html>

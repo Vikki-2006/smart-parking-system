@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exit Processing - Smart Parking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="dark-theme">
+    <div class="login-container led-box">
+        <h1 class="led-text" style="color: var(--led-yellow); text-shadow: 0 0 10px var(--led-yellow);">EXIT SUMMARY
+        </h1>
+
+        <div
+            style="text-align: left; margin: 20px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;">
+            <p style="margin-bottom: 10px; font-size: 1.1rem;"><span style="color: var(--text-dim);">Slot:</span> {{
+                slot.id }}</p>
+            <p style="margin-bottom: 10px; font-size: 1.1rem;"><span style="color: var(--text-dim);">Vehicle:</span> {{
+                slot.car_number }}</p>
+            <p style="margin-bottom: 10px; font-size: 1.1rem;"><span style="color: var(--text-dim);">Entry:</span> {{
+                slot.entry_time }}</p>
+            <p style="margin-bottom: 10px; font-size: 1.1rem;"><span style="color: var(--text-dim);">Duration:</span> {{
+                duration }}</p>
+        </div>
+
+        <div class="stat yellow-text" style="margin-bottom: 30px;">TOTAL AMOUNT <span>₹{{ amount }}</span></div>
+
+        <form action="/process_exit" method="POST">
+            <input type="hidden" name="slot_id" value="{{ slot.id }}">
+            <button type="submit" class="led-btn green">PAYMENT RECEIVED & OPEN BARRIER</button>
+            <a href="/dashboard" class="led-btn red" style="margin-top: 15px; display: block;">CANCEL</a>
+        </form>
+    </div>
+</body>
+
+</html>

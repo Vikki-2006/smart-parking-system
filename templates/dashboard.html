@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>Dashboard - Smart Parking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="dark-theme">
+    <header class="dashboard-header">
+        <h1 class="led-text">TERMINAL CONTROL</h1>
+        <a href="/logout" class="led-btn sm">LOGOUT</a>
+    </header>
+
+    <div class="stats-panel led-box">
+        <div class="stat">TOTAL <span>{{ total }}</span></div>
+        <div class="stat green-text">VACANT <span>{{ vacant }}</span></div>
+        <div class="stat yellow-text">RESERVED <span>{{ reserved }}</span></div>
+        <div class="stat red-text">OCCUPIED <span>{{ occupied }}</span></div>
+    </div>
+
+    <div class="main-content">
+        <div class="left-panel">
+            <div class="control-panel led-box">
+                <h2>VEHICLE ENTRY</h2>
+                <form action="/entry" method="POST">
+                    <input type="text" name="car_number" placeholder="Car Number (e.g. TN-45-XX-1234)" required {% if
+                        vacant==0 %}disabled{% endif %}>
+                    <input type="text" name="phone_number" placeholder="Phone Number" required {% if vacant==0
+                        %}disabled{% endif %}>
+                    {% if vacant > 0 %}
+                    <button type="submit" class="led-btn green">ALLOCATE SLOT</button>
+                    {% else %}
+                    <button type="button" class="led-btn red" disabled>PARKING FULL</button>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="control-panel led-box" style="margin-top: 20px;">
+                <h2>VEHICLE EXIT</h2>
+                {% if error %}
+                <div class="error-msg" style="margin-bottom: 10px;">{{ error }}</div>
+                {% endif %}
+                <form action="/exit_search" method="POST">
+                    <input type="text" name="car_number" placeholder="Enter Car Number to Exit" required>
+                    <button type="submit" class="led-btn yellow">PROCESS EXIT</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="right-panel led-box">
+            <h2>PARKING GRID</h2>
+            <div class="parking-grid">
+                {% for slot in slots %}
+                <div class="slot {{ slot.status }}">
+                    <div class="slot-id">{{ slot.id }}</div>
+                    {% if slot.car_number %}
+                    <div class="car-num">{{ slot.car_number }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

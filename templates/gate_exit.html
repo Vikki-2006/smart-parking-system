@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gate Exit - Smart Parking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="dark-theme">
+    <div class="login-container led-box">
+        <h1 class="led-text" style="color: var(--led-green); text-shadow: 0 0 10px var(--led-green);">HAVE A SAFE
+            JOURNEY</h1>
+        <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 1.2rem;">Barrier Opening...</p>
+
+        <div class="success-msg" style="font-size: 1.5rem; margin-bottom: 30px; font-weight: bold;">
+            VEHICLE EXITED SUCCESSFULLY
+        </div>
+
+        <a href="/dashboard" class="led-btn sm">BACK TO TERMINAL</a>
+    </div>
+</body>
+
+</html>
