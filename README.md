@@ -24,32 +24,23 @@ The system generates a QR code for parking allocation and navigates users to the
 - QR Code Generator
 
 ## 📂 Project Structure
-smart-parking-system
+smart-parking-system/
 │
-├── app.py                 # Main Flask application
-├── parking.db             # SQLite database for parking slots
-├── requirements.txt       # Python dependencies
-├── README.md              # Project documentation
+├── app.py
+├── parking.db
+├── requirements.txt
+├── README.md
 │
-├── templates              # HTML templates
-│   ├── login.html         # Admin login page
-│   ├── dashboard.html     # Parking dashboard
-│   ├── qr.html            # QR code display page
-│   ├── scan.html          # QR scan processing page
-│   ├── exit.html          # Vehicle exit page
-│   ├── gate_entry.html    # Entry gate interface
-│   ├── gate_exit.html     # Exit gate interface
-│   └── gate_screen.html   # Gate display screen
+├── templates/
 │
-└── static                 # Static assets
-    └── style.css          # CSS styling for UI
-
+└── static/
 ## 📸 Project Screenshots
 
 ### 🔐 Login Page
 <img width="900" alt="Login Page" src="https://github.com/user-attachments/assets/384ba845-3404-476d-ad0c-1be0e59c8806" />
 ### 📊 Dashboard
 <img width="900" src="https://github.com/user-attachments/assets/03cc26b8-7754-4097-8aba-a77c44270687"/>
+
 
 
 
