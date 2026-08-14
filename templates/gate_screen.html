@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gate Screen - Smart Parking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta http-equiv="refresh" content="3;url=/dashboard" />
+    <style>
+        .barrier-container {
+            width: 200px;
+            height: 150px;
+            margin: 30px auto;
+            position: relative;
+            border-bottom: 4px solid var(--border-color);
+        }
+
+        .barrier-post {
+            width: 20px;
+            height: 100px;
+            background: #444;
+            position: absolute;
+            bottom: 0;
+            left: 20px;
+            border-radius: 4px 4px 0 0;
+            border: 2px solid var(--border-color);
+        }
+
+        .barrier-arm {
+            width: 150px;
+            height: 15px;
+            background: repeating-linear-gradient(45deg,
+                    var(--led-yellow),
+                    var(--led-yellow) 10px,
+                    #000 10px,
+                    #000 20px);
+            position: absolute;
+            bottom: 80px;
+            left: 30px;
+            transform-origin: 0% 50%;
+            border: 1px solid var(--led-yellow);
+            box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+            animation: liftBarrier 2.5s forwards ease-in-out;
+        }
+
+        @keyframes liftBarrier {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            20% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(-85deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="dark-theme">
+    <div class="login-container led-box" style="max-width: 600px; padding: 40px;">
+        <h1 class="led-text"
+            style="color: var(--led-green); text-shadow: 0 0 10px var(--led-green); margin-bottom: 10px;">ACCESS GRANTED
+        </h1>
+        <p
+            style="color: var(--led-blue); margin-bottom: 25px; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px;">
+            Barrier Opening...</p>
+
+        <div class="barrier-container">
+            <div class="barrier-post"></div>
+            <div class="barrier-arm"></div>
+        </div>
+
+        <div
+            style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 30px; text-align: left;">
+            <div style="color: var(--text-dim); margin-bottom: 15px; font-size: 1.5rem;">
+                <span style="color: #fff;">Vehicle Number:</span> {{ slot.car_number }}
+            </div>
+            <div style="color: var(--text-dim); margin-bottom: 15px; font-size: 1.5rem;">
+                <span style="color: #fff;">Date & Time:</span> {{ slot.scan_time }}
+            </div>
+            <div style="color: var(--text-dim); font-size: 1.5rem;">
+                <span style="color: #fff;">Location:</span> XQ34+PVC, Irungalur, Tamil Nadu 621105
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

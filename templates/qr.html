@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Allocated - Smart Parking System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+        :root {
+            --bg-deep: #07090e;
+            --panel-bg: rgba(13, 17, 26, 0.9);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --led-cyan: #00f0ff;
+            --led-green: #10b981;
+            --led-yellow: #f59e0b;
+            --glow-yellow: 0 0 20px rgba(245, 158, 11, 0.4);
+            --glow-green: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+
+        body.dark-theme {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 50% 30%, rgba(245, 158, 11, 0.06) 0%, transparent 65%),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 24px;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .confirmation-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 36px 28px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(16px);
+            text-align: center;
+            animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--led-yellow);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+        }
+
+        .led-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--led-yellow);
+            text-shadow: var(--glow-yellow);
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: var(--led-cyan);
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            margin-bottom: 24px;
+        }
+
+        .details-box {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.15rem;
+            color: var(--text-dim);
+        }
+
+        .detail-row span.val {
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+        }
+
+        .detail-row span.val.yellow {
+            color: var(--led-yellow);
+            text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+        }
+
+        .qr-section {
+            margin-bottom: 24px;
+        }
+
+        .qr-instruction {
+            color: var(--led-yellow);
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        .qr-frame {
+            background: #ffffff;
+            padding: 14px;
+            border-radius: 12px;
+            display: inline-block;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s ease;
+        }
+
+        .qr-frame:hover {
+            transform: scale(1.02);
+        }
+
+        .qr-frame img {
+            width: 210px;
+            height: 210px;
+            display: block;
+        }
+
+        .action-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .led-btn {
+            background: rgba(0, 0, 0, 0.4);
+            color: var(--text-main);
+            border: 2px solid var(--border-color);
+            padding: 12px 20px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+            display: block;
+            width: 100%;
+        }
+
+        .led-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .led-btn.green {
+            border-color: var(--led-green);
+            color: var(--led-green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .led-btn.green:hover {
+            background: rgba(16, 185, 129, 0.2);
+            box-shadow: var(--glow-green);
+        }
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+</head>
+
+<body class="dark-theme">
+    <div class="confirmation-card">
+        <div class="status-badge">
+            ● CONFIRMATION ISSUED
+        </div>
+        <h1 class="led-title">PARKING SLOT ALLOCATED</h1>
+        <div class="subtitle">PROCEED TO SLOT {{ slot.id }}</div>
+
+        <div class="details-box">
+            <div class="detail-row">
+                <span>Car Number</span>
+                <span class="val">{{ slot.car_number }}</span>
+            </div>
+            <div class="detail-row">
+                <span>Parking Slot</span>
+                <span class="val">{{ slot.id }}</span>
+            </div>
+            <div class="detail-row">
+                <span>Status</span>
+                <span class="val yellow">{{ slot.status | upper }}</span>
+            </div>
+            <div class="detail-row">
+                <span>Entry Time</span>
+                <span class="val">{{ slot.entry_time }}</span>
+            </div>
+        </div>
+
+        <div class="qr-section">
+            <div class="qr-instruction">SCAN QR CODE TO CONFIRM PARKING / OCCUPY SLOT</div>
+            <div class="qr-frame">
+                <img src="{{ url_for('qr_image', session_id=slot.session_id) }}" alt="QR Code">
+            </div>
+        </div>
+
+        <div class="action-group">
+            <a href="{{ scan_url }}" class="led-btn green">[ SIMULATE QR SCAN ]</a>
+            <a href="/dashboard" class="led-btn">BACK TO TERMINAL</a>
+        </div>
+    </div>
+</body>
+
+</html>

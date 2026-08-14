@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exit Summary - Smart Parking System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+        :root {
+            --bg-deep: #07090e;
+            --panel-bg: rgba(13, 17, 26, 0.9);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --led-yellow: #f59e0b;
+            --led-green: #10b981;
+            --led-red: #ef4444;
+            --glow-yellow: 0 0 20px rgba(245, 158, 11, 0.4);
+            --glow-green: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+
+        body.dark-theme {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 50% 30%, rgba(245, 158, 11, 0.08) 0%, transparent 65%),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 24px;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .exit-card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px 32px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(16px);
+            text-align: center;
+            animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--led-yellow);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+        }
+
+        .led-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--led-yellow);
+            text-shadow: var(--glow-yellow);
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+        }
+
+        .details-box {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.15rem;
+            color: var(--text-dim);
+        }
+
+        .detail-row span.val {
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+        }
+
+        .amount-card {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 28px;
+        }
+
+        .amount-card .label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+        }
+
+        .amount-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--led-yellow);
+            text-shadow: var(--glow-yellow);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .led-btn {
+            background: rgba(0, 0, 0, 0.4);
+            color: var(--text-main);
+            border: 2px solid var(--border-color);
+            padding: 14px 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+            display: block;
+            width: 100%;
+        }
+
+        .led-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .led-btn.green {
+            border-color: var(--led-green);
+            color: var(--led-green);
+            background: rgba(16, 185, 129, 0.12);
+        }
+
+        .led-btn.green:hover {
+            background: rgba(16, 185, 129, 0.22);
+            box-shadow: var(--glow-green);
+        }
+
+        .led-btn.red {
+            border-color: var(--led-red);
+            color: var(--led-red);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .led-btn.red:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+</head>
+
+<body class="dark-theme">
+    <div class="exit-card">
+        <div class="status-badge">
+            ● PAYMENT TERMINAL
+        </div>
+        <h1 class="led-title">EXIT SUMMARY</h1>
+
+        <div class="details-box">
+            <div class="detail-row">
+                <span>Parking Slot</span>
+                <span class="val">{{ slot.id }}</span>
+            </div>
+            <div class="detail-row">
+                <span>Car Number</span>
+                <span class="val">{{ slot.car_number }}</span>
+            </div>
+            <div class="detail-row">
+                <span>Entry Time</span>
+                <span class="val">{{ slot.entry_time }}</span>
+            </div>
+            <div class="detail-row">
+                <span>Total Duration</span>
+                <span class="val">{{ duration }}</span>
+            </div>
+        </div>
+
+        <div class="amount-card">
+            <div class="label">TOTAL AMOUNT DUE</div>
+            <div class="value">₹{{ amount }}</div>
+        </div>
+
+        <form action="/process_exit" method="POST">
+            <input type="hidden" name="slot_id" value="{{ slot.id }}">
+            <button type="submit" class="led-btn green">PAYMENT RECEIVED & OPEN BARRIER</button>
+            <a href="/dashboard" class="led-btn red">CANCEL</a>
+        </form>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,313 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+
+:root {
+    --bg-color: #0a0a0a;
+    --panel-bg: #111111;
+    --border-color: #333333;
+    --text-main: #ffffff;
+    --text-dim: #aaaaaa;
+
+    --led-red: #ff2a2a;
+    --led-green: #2aff2a;
+    --led-yellow: #ffaa00;
+    --led-blue: #00e5ff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+body.dark-theme {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.led-text {
+    font-size: 2rem;
+    color: var(--led-blue);
+    text-shadow: 0 0 10px var(--led-blue);
+    letter-spacing: 2px;
+}
+
+.led-box {
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.stats-panel {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.stat {
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-dim);
+}
+
+.stat span {
+    display: block;
+    font-size: 2.5rem;
+    color: var(--text-main);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.green-text span {
+    color: var(--led-green);
+    text-shadow: 0 0 10px var(--led-green);
+}
+
+.yellow-text span {
+    color: var(--led-yellow);
+    text-shadow: 0 0 10px var(--led-yellow);
+}
+
+.red-text span {
+    color: var(--led-red);
+    text-shadow: 0 0 10px var(--led-red);
+}
+
+.main-content {
+    display: flex;
+    gap: 20px;
+}
+
+.left-panel {
+    flex: 1;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.right-panel {
+    flex: 2;
+}
+
+.control-panel h2,
+.right-panel h2 {
+    color: var(--text-dim);
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    text-transform: uppercase;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+input[type="text"],
+input[type="password"] {
+    background: #000;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 12px;
+    font-size: 1.1rem;
+    border-radius: 4px;
+    outline: none;
+    transition: all 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: var(--led-blue);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+input[type="text"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.led-btn {
+    background: transparent;
+    color: var(--text-main);
+    border: 2px solid #555;
+    padding: 12px 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    display: inline-block;
+}
+
+.led-btn.sm {
+    padding: 8px 15px;
+    font-size: 1rem;
+}
+
+.led-btn:hover:not(:disabled) {
+    background: #222;
+}
+
+.led-btn.green {
+    border-color: var(--led-green);
+    color: var(--led-green);
+}
+
+.led-btn.green:hover:not(:disabled) {
+    background: rgba(42, 255, 42, 0.1);
+    box-shadow: 0 0 15px rgba(42, 255, 42, 0.4);
+}
+
+.led-btn.yellow {
+    border-color: var(--led-yellow);
+    color: var(--led-yellow);
+}
+
+.led-btn.yellow:hover:not(:disabled) {
+    background: rgba(255, 170, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+}
+
+.led-btn.red {
+    border-color: var(--led-red);
+    color: var(--led-red);
+}
+
+.led-btn.red:hover:not(:disabled) {
+    background: rgba(255, 42, 42, 0.1);
+    box-shadow: 0 0 15px rgba(255, 42, 42, 0.4);
+}
+
+.led-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #555;
+    color: #555;
+}
+
+.error-msg {
+    color: var(--led-red);
+    background: rgba(255, 42, 42, 0.1);
+    padding: 10px;
+    border: 1px solid var(--led-red);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.success-msg {
+    color: var(--led-green);
+    background: rgba(42, 255, 42, 0.1);
+    padding: 10px;
+    border: 1px solid var(--led-green);
+    border-radius: 4px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.parking-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+}
+
+.slot {
+    background: #000;
+    border: 2px solid #444;
+    border-radius: 6px;
+    height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.slot:hover {
+    transform: scale(1.05);
+}
+
+.slot-id {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-dim);
+}
+
+.car-num {
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: #fff;
+    background: #222;
+    padding: 2px 5px;
+    border-radius: 3px;
+    border: 1px solid #444;
+}
+
+.slot.vacant {
+    border-color: var(--led-green);
+    box-shadow: inset 0 0 15px rgba(42, 255, 42, 0.1);
+}
+
+.slot.vacant .slot-id {
+    color: var(--led-green);
+    text-shadow: 0 0 5px var(--led-green);
+}
+
+.slot.reserved {
+    border-color: var(--led-yellow);
+    box-shadow: inset 0 0 15px rgba(255, 170, 0, 0.1);
+}
+
+.slot.reserved .slot-id {
+    color: var(--led-yellow);
+    text-shadow: 0 0 5px var(--led-yellow);
+}
+
+.slot.occupied {
+    border-color: var(--led-red);
+    box-shadow: inset 0 0 15px rgba(255, 42, 42, 0.1);
+}
+
+.slot.occupied .slot-id {
+    color: var(--led-red);
+    text-shadow: 0 0 5px var(--led-red);
+}
+
+/* For Login / Standalone pages */
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    text-align: center;
+}
+
+.login-container h1 {
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+}
