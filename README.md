@@ -5,12 +5,6 @@
 
 
 
-
-
-
-
-
-
 # Smart Parking System 🚗        
 
 AI based Smart Parking System using Flask, SQLite and QR Code.
@@ -18,14 +12,15 @@ AI based Smart Parking System using Flask, SQLite and QR Code.
 ## 📌 Project Description
 This project is a Smart Parking Management System developed using Python Flask.  
 It helps manage parking slots, vehicle entry and exit, and slot availability.  
-The system generates a QR code for parking allocation and manages slot status via the terminal dashboard.
+The system generates a QR code for parking allocation and navigates users to the parking slot using Google Maps.
 
 ## 🚀 Features
 - Admin login dashboard
 - Automatic parking slot allocation
-- QR code based parking entry & check-in
+- QR code based parking entry
+- Google Maps navigation to parking slot
 - Vehicle entry and exit management
-- Real-time parking availability monitoring
+- Parking availability monitoring
 
 ## 🛠 Technologies Used
 - Python

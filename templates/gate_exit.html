@@ -4,154 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gate Exit - Smart Parking System</title>
+    <title>Gate Exit - Smart Parking</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
-        :root {
-            --bg-deep: #07090e;
-            --panel-bg: rgba(13, 17, 26, 0.9);
-            --border-color: rgba(255, 255, 255, 0.12);
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --led-green: #10b981;
-            --led-cyan: #00f0ff;
-            --glow-green: 0 0 20px rgba(16, 185, 129, 0.4);
-        }
-
-        body.dark-theme {
-            background-color: var(--bg-deep);
-            background-image: 
-                radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.08) 0%, transparent 65%),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 24px;
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            padding: 20px;
-            font-family: 'Rajdhani', sans-serif;
-        }
-
-        .exit-card {
-            width: 100%;
-            max-width: 480px;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 40px 32px;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(16px);
-            text-align: center;
-            animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--led-green);
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            margin-bottom: 20px;
-        }
-
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--led-green);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--led-green);
-            animation: pulseGlow 1.8s infinite ease-in-out;
-        }
-
-        .led-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--led-green);
-            text-shadow: var(--glow-green);
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: var(--led-cyan);
-            font-size: 1.3rem;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            margin-bottom: 28px;
-        }
-
-        .success-box {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--led-green);
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 1.3rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            margin-bottom: 28px;
-            box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.15);
-        }
-
-        .led-btn {
-            background: rgba(0, 0, 0, 0.4);
-            color: var(--text-main);
-            border: 2px solid var(--border-color);
-            padding: 14px 20px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            text-transform: uppercase;
-            transition: transform 0.2s ease, background-color 0.2s ease;
-            display: block;
-            width: 100%;
-        }
-
-        .led-btn:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        @keyframes cardEntrance {
-            from { opacity: 0; transform: translateY(20px) scale(0.97); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes pulseGlow {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.85); }
-        }
-    </style>
 </head>
 
 <body class="dark-theme">
-    <div class="exit-card">
-        <div class="status-badge">
-            <span class="pulse-dot"></span> BARRIER OPEN
-        </div>
-        <h1 class="led-title">HAVE A SAFE JOURNEY</h1>
-        <div class="subtitle">Barrier Opening...</div>
+    <div class="login-container led-box">
+        <h1 class="led-text" style="color: var(--led-green); text-shadow: 0 0 10px var(--led-green);">HAVE A SAFE
+            JOURNEY</h1>
+        <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 1.2rem;">Barrier Opening...</p>
 
-        <div class="success-box">
+        <div class="success-msg" style="font-size: 1.5rem; margin-bottom: 30px; font-weight: bold;">
             VEHICLE EXITED SUCCESSFULLY
         </div>
 
-        <a href="/dashboard" class="led-btn">BACK TO TERMINAL</a>
+        <a href="/dashboard" class="led-btn sm">BACK TO TERMINAL</a>
     </div>
 </body>
 
