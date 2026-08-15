@@ -26,9 +26,14 @@ wheels/
 
 # Virtual Environments
 venv/
+.venv/
 env/
 ENV/
+
+# Environment Variables & Secrets
 .env
+.env.*
+!.env.example
 
 # IDE / Editor files
 .vscode/

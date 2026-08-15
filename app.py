@@ -207,8 +207,8 @@ init_db()
 
 @app.before_request
 def require_login():
-    allowed_routes = ['login', 'static', 'qr', 'scan', 'gate_entry', 'qr_image', 'api_dashboard_status']
-    if request.endpoint not in allowed_routes and 'admin_logged_in' not in session:
+    allowed_routes = ['login', 'demo_login', 'static', 'qr', 'scan', 'gate_entry', 'qr_image', 'api_dashboard_status']
+    if request.endpoint not in allowed_routes and ('admin_logged_in' not in session and 'demo_logged_in' not in session):
         return redirect(url_for('login'))
 
 @app.route('/')
@@ -221,17 +221,28 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         if username == 'admin' and password == 'admin123':
+            session.clear()
             session['admin_logged_in'] = True
             return redirect(url_for('dashboard'))
         return render_template('login.html', error='Invalid credentials')
     
-    if session.get('admin_logged_in'):
+    if session.get('admin_logged_in') or session.get('demo_logged_in'):
         return redirect(url_for('dashboard'))
     return render_template('login.html')
+
+@app.route('/demo-login', methods=['GET', 'POST'])
+def demo_login():
+    session.clear()
+    session['admin_logged_in'] = True
+    session['demo_logged_in'] = True
+    session['is_demo'] = True
+    return redirect(url_for('dashboard'))
 
 @app.route('/logout')
 def logout():
     session.pop('admin_logged_in', None)
+    session.pop('demo_logged_in', None)
+    session.pop('is_demo', None)
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
