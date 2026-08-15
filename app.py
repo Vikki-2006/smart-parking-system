@@ -180,11 +180,34 @@ def entry():
     
     return redirect(url_for('qr', session_id=session_id))
 
+def get_base_url():
+    # 1. Explicit environment variable override (e.g. APP_BASE_URL or RENDER_EXTERNAL_URL)
+    env_url = os.environ.get('APP_BASE_URL') or os.environ.get('RENDER_EXTERNAL_URL')
+    if env_url:
+        return env_url.rstrip('/')
+
+    # 2. Flask request host inspection (works automatically on Render and public domains)
+    if request:
+        host = request.host.split(':')[0]
+        is_local_host = (
+            host in ('localhost', '127.0.0.1') or
+            host.startswith('192.168.') or
+            host.startswith('10.') or
+            host.startswith('172.')
+        )
+        if os.environ.get('RENDER') or 'onrender.com' in request.host or not is_local_host:
+            return request.host_url.rstrip('/')
+
+    # 3. Fallback for local development network access (mobile on local Wi-Fi)
+    local_ip = get_local_ip()
+    port = request.host.split(':')[1] if (request and ':' in request.host) else 5000
+    return f"http://{local_ip}:{port}"
+
 @app.route('/qr/<session_id>')
 def qr(session_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute('SELECT * FROM slots WHERE session_id = ?', (session_id,))
+    cursor.execute('SELECT * FROM slots WHERE session_id = ? OR id = ? OR id = ?', (session_id, session_id, f"S{session_id}"))
     slot = cursor.fetchone()
     
     if not slot:
@@ -193,17 +216,15 @@ def qr(session_id):
     cursor.execute("SELECT COUNT(*) FROM slots WHERE status = 'vacant'")
     vacant_count = cursor.fetchone()[0]
     
-    local_ip = get_local_ip()
-    port = request.host.split(':')[1] if ':' in request.host else 5000
-    scan_url = f"http://{local_ip}:{port}/scan/{session_id}"
+    base_url = get_base_url()
+    scan_url = f"{base_url}/scan/{session_id}"
     return render_template('qr.html', slot=slot, vacant_count=vacant_count, scan_url=scan_url)
 
 @app.route('/qr_image/<session_id>')
 def qr_image(session_id):
     # Endpoint to generate actual QR code image
-    local_ip = get_local_ip()
-    port = request.host.split(':')[1] if ':' in request.host else 5000
-    scan_url = f"http://{local_ip}:{port}/scan/{session_id}"
+    base_url = get_base_url()
+    scan_url = f"{base_url}/scan/{session_id}"
     
     qr = qrcode.QRCode(
         version=1,
@@ -225,7 +246,7 @@ def qr_image(session_id):
 def scan(session_id):
     db = get_db()
     cursor = db.cursor()
-    cursor.execute('SELECT * FROM slots WHERE session_id = ?', (session_id,))
+    cursor.execute('SELECT * FROM slots WHERE session_id = ? OR id = ? OR id = ?', (session_id, session_id, f"S{session_id}"))
     slot = cursor.fetchone()
     
     if not slot:
@@ -234,9 +255,9 @@ def scan(session_id):
     already_scanned = False
     if slot['status'] == 'reserved':
         scan_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        cursor.execute("UPDATE slots SET status = 'occupied', scan_time = ? WHERE session_id = ?", (scan_time, session_id))
+        cursor.execute("UPDATE slots SET status = 'occupied', scan_time = ? WHERE id = ?", (scan_time, slot['id']))
         db.commit()
-        cursor.execute('SELECT * FROM slots WHERE session_id = ?', (session_id,))
+        cursor.execute('SELECT * FROM slots WHERE id = ?', (slot['id'],))
         slot = cursor.fetchone()
     elif slot['status'] == 'occupied':
         already_scanned = True
