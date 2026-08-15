@@ -2,3 +2,5 @@ flask
 qrcode
 pillow
 gunicorn
+psycopg[binary]
+python-dotenv

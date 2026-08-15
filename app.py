@@ -4,10 +4,20 @@ import uuid
 import webbrowser
 from threading import Timer
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify, g, has_app_context
 import qrcode
 from io import BytesIO
 import socket
+from dotenv import load_dotenv
+
+load_dotenv()
+
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+    HAS_PSYCOPG = True
+except ImportError:
+    HAS_PSYCOPG = False
 
 def get_local_ip():
     try:
@@ -21,39 +31,120 @@ def get_local_ip():
 
 app = Flask(__name__)
 app.secret_key = 'smart_parking_super_secret'
-# Ensure absolute pathing for DB so the app works regardless of CWD or WSGI runner
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, 'parking.db')
+
+def get_db_url():
+    url = os.environ.get('DATABASE_URL')
+    if url:
+        if url.startswith('postgres://'):
+            url = url.replace('postgres://', 'postgresql://', 1)
+        return url
+    return None
+
+def is_postgres():
+    return get_db_url() is not None
+
+def adapt_sql(sql):
+    if is_postgres():
+        return sql.replace('?', '%s')
+    else:
+        return sql.replace('%s', '?')
+
+class DBCursorWrapper:
+    def __init__(self, cursor, is_pg=False):
+        self.cursor = cursor
+        self.is_pg = is_pg
+
+    def execute(self, sql, params=()):
+        adapted_sql = adapt_sql(sql)
+        return self.cursor.execute(adapted_sql, params)
+
+    def executemany(self, sql, params_seq):
+        adapted_sql = adapt_sql(sql)
+        return self.cursor.executemany(adapted_sql, params_seq)
+
+    def fetchone(self):
+        return self.cursor.fetchone()
+
+    def fetchall(self):
+        return self.cursor.fetchall()
+
+class DBWrapper:
+    def __init__(self, conn, is_pg=False):
+        self.conn = conn
+        self.is_pg = is_pg
+
+    def cursor(self):
+        return DBCursorWrapper(self.conn.cursor(), self.is_pg)
+
+    def commit(self):
+        self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
+
+    def close(self):
+        self.conn.close()
 
 _db_initialized = False
 
 def init_db():
     global _db_initialized
-    db = sqlite3.connect(DATABASE)
+    db_url = get_db_url()
+    
+    if db_url:
+        if not HAS_PSYCOPG:
+            raise RuntimeError("psycopg package is required to connect to PostgreSQL (DATABASE_URL is set).")
+        conn = psycopg.connect(db_url, row_factory=dict_row)
+        is_pg = True
+    else:
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row
+        is_pg = False
+
+    db = DBWrapper(conn, is_pg=is_pg)
     try:
         cursor = db.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS slots (
-                id TEXT PRIMARY KEY,
-                status TEXT NOT NULL,
-                car_number TEXT,
-                phone_number TEXT,
-                entry_time TEXT,
-                exit_time TEXT,
-                session_id TEXT,
-                scan_time TEXT
-            )
-        ''')
-        
-        # Check if scan_time column exists for database migration
-        cursor.execute("PRAGMA table_info(slots)")
-        columns = [row[1] for row in cursor.fetchall()]
-        if 'scan_time' not in columns:
-            cursor.execute("ALTER TABLE slots ADD COLUMN scan_time TEXT")
+        if is_pg:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS slots (
+                    id VARCHAR(20) PRIMARY KEY,
+                    status VARCHAR(20) NOT NULL,
+                    car_number VARCHAR(50),
+                    phone_number VARCHAR(50),
+                    entry_time VARCHAR(50),
+                    exit_time VARCHAR(50),
+                    session_id VARCHAR(100),
+                    scan_time VARCHAR(50)
+                )
+            ''')
+            cursor.execute("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'slots' AND column_name = 'scan_time'
+            """)
+            if not cursor.fetchone():
+                cursor.execute("ALTER TABLE slots ADD COLUMN scan_time VARCHAR(50)")
+        else:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS slots (
+                    id TEXT PRIMARY KEY,
+                    status TEXT NOT NULL,
+                    car_number TEXT,
+                    phone_number TEXT,
+                    entry_time TEXT,
+                    exit_time TEXT,
+                    session_id TEXT,
+                    scan_time TEXT
+                )
+            ''')
+            cursor.execute("PRAGMA table_info(slots)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if 'scan_time' not in columns:
+                cursor.execute("ALTER TABLE slots ADD COLUMN scan_time TEXT")
 
-        # Ensure all 100 slots (S1 to S100) exist in database without overwriting existing data
         cursor.execute("SELECT id FROM slots")
-        existing_ids = set(row[0] for row in cursor.fetchall())
+        existing_ids = set(row['id'] for row in cursor.fetchall())
         
         missing_slots = [(f'S{i}', 'vacant') for i in range(1, 101) if f'S{i}' not in existing_ids]
         if missing_slots:
@@ -69,11 +160,49 @@ def init_db():
 def get_db():
     if not _db_initialized:
         init_db()
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+    
+    if has_app_context():
+        if 'db' not in g:
+            db_url = get_db_url()
+            if db_url:
+                if not HAS_PSYCOPG:
+                    raise RuntimeError("psycopg package is required to connect to PostgreSQL.")
+                conn = psycopg.connect(db_url, row_factory=dict_row)
+                g.db = DBWrapper(conn, is_pg=True)
+            else:
+                conn = sqlite3.connect(DATABASE)
+                conn.row_factory = sqlite3.Row
+                g.db = DBWrapper(conn, is_pg=False)
+        return g.db
+    else:
+        db_url = get_db_url()
+        if db_url:
+            if not HAS_PSYCOPG:
+                raise RuntimeError("psycopg package is required to connect to PostgreSQL.")
+            conn = psycopg.connect(db_url, row_factory=dict_row)
+            return DBWrapper(conn, is_pg=True)
+        else:
+            conn = sqlite3.connect(DATABASE)
+            conn.row_factory = sqlite3.Row
+            return DBWrapper(conn, is_pg=False)
 
-# Automatically initialize database and tables when app is loaded (essential for Gunicorn/Render)
+@app.teardown_appcontext
+def close_db(error=None):
+    db = g.pop('db', None)
+    if db is not None:
+        if error:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+        else:
+            try:
+                db.commit()
+            except Exception:
+                pass
+        db.close()
+
+# Automatically initialize database on module load
 init_db()
 
 @app.before_request
@@ -181,12 +310,20 @@ def entry():
     return redirect(url_for('qr', session_id=session_id))
 
 def get_base_url():
-    # 1. Explicit environment variable override (e.g. APP_BASE_URL or RENDER_EXTERNAL_URL)
+    # 1. Explicit environment variable override (e.g. APP_BASE_URL, RENDER_EXTERNAL_URL, VERCEL_URL)
     env_url = os.environ.get('APP_BASE_URL') or os.environ.get('RENDER_EXTERNAL_URL')
     if env_url:
+        if not env_url.startswith('http://') and not env_url.startswith('https://'):
+            env_url = f"https://{env_url}"
         return env_url.rstrip('/')
 
-    # 2. Flask request host inspection (works automatically on Render and public domains)
+    vercel_url = os.environ.get('VERCEL_URL')
+    if vercel_url:
+        if not vercel_url.startswith('http://') and not vercel_url.startswith('https://'):
+            vercel_url = f"https://{vercel_url}"
+        return vercel_url.rstrip('/')
+
+    # 2. Flask request host inspection (supports X-Forwarded-Host and X-Forwarded-Proto)
     if request:
         host = request.host.split(':')[0]
         is_local_host = (
@@ -195,8 +332,10 @@ def get_base_url():
             host.startswith('10.') or
             host.startswith('172.')
         )
-        if os.environ.get('RENDER') or 'onrender.com' in request.host or not is_local_host:
-            return request.host_url.rstrip('/')
+        if os.environ.get('VERCEL') or os.environ.get('RENDER') or 'vercel.app' in request.host or 'onrender.com' in request.host or not is_local_host:
+            scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
+            forwarded_host = request.headers.get('X-Forwarded-Host', request.host)
+            return f"{scheme}://{forwarded_host}".rstrip('/')
 
     # 3. Fallback for local development network access (mobile on local Wi-Fi)
     local_ip = get_local_ip()
@@ -214,7 +353,8 @@ def qr(session_id):
         return "Invalid Session", 404
         
     cursor.execute("SELECT COUNT(*) FROM slots WHERE status = 'vacant'")
-    vacant_count = cursor.fetchone()[0]
+    row = cursor.fetchone()
+    vacant_count = list(row.values())[0] if isinstance(row, dict) else row[0]
     
     base_url = get_base_url()
     scan_url = f"{base_url}/scan/{session_id}"
@@ -297,9 +437,6 @@ def process_exit():
         
     db = get_db()
     cursor = db.cursor()
-    
-    # Future Integration:
-    # Replace simulated barrier animation with Raspberry Pi GPIO motor control.
     
     cursor.execute('''
         UPDATE slots 

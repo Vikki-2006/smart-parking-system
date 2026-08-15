@@ -47,9 +47,17 @@
         }
 
         @keyframes liftBarrier {
-            0% { transform: rotate(0deg); }
-            20% { transform: rotate(0deg); }
-            100% { transform: rotate(-85deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            20% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(-85deg);
+            }
         }
     </style>
 </head>
@@ -60,7 +68,8 @@
             <span class="status-dot" style="background-color: var(--green); box-shadow: 0 0 10px var(--green);"></span>
             ACCESS GRANTED
         </h1>
-        <p style="color: var(--cyan); margin-bottom: 24px; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 1.5px; font-family: var(--font-mono);">
+        <p
+            style="color: var(--cyan); margin-bottom: 24px; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 1.5px; font-family: var(--font-mono);">
             Barrier Opening...
         </p>
 
@@ -69,12 +78,15 @@
             <div class="barrier-arm"></div>
         </div>
 
-        <div style="background: #090e18; padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 24px; text-align: left; font-family: var(--font-mono);">
+        <div
+            style="background: #090e18; padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 24px; text-align: left; font-family: var(--font-mono);">
             <div style="color: var(--muted); margin-bottom: 12px; font-size: 0.95rem;">
-                <span style="color: var(--text);">Vehicle Number:</span> <strong style="color: var(--cyan);">{{ slot.car_number }}</strong>
+                <span style="color: var(--text);">Vehicle Number:</span> <strong style="color: var(--cyan);">{{
+                    slot.car_number }}</strong>
             </div>
             <div style="color: var(--muted); margin-bottom: 12px; font-size: 0.95rem;">
-                <span style="color: var(--text);">Date & Time:</span> <span style="color: var(--text);">{{ slot.scan_time }}</span>
+                <span style="color: var(--text);">Date & Time:</span> <span style="color: var(--text);">{{
+                    slot.scan_time }}</span>
             </div>
             <div style="color: var(--muted); font-size: 0.95rem;">
                 <span style="color: var(--text);">Location:</span> Irungalur, Tamil Nadu 621105
