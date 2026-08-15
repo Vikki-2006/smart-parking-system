@@ -4,44 +4,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code - Smart Parking</title>
+    <title>Reservation Confirmed - Smart Parking Control Center</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body class="dark-theme">
-    <div class="login-container led-box" style="max-width: 600px; padding: 40px;">
-        <h1 class="led-text"
-            style="color: var(--led-green); text-shadow: 0 0 10px var(--led-green); margin-bottom: 20px;">ACCESS GRANTED
-        </h1>
-        <p
-            style="color: var(--led-blue); margin-bottom: 25px; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px;">
-            Barrier Opening...</p>
+<body class="dark-theme qr-page-body">
+    <!-- Ambient Parking Facility Background Environment -->
+    <div class="qr-bg-grid" aria-hidden="true"></div>
+    <div class="qr-bg-glow" aria-hidden="true"></div>
+    <div class="qr-bg-scanline" aria-hidden="true"></div>
 
-        <div class="success-msg"
-            style="font-size: 2rem; margin-bottom: 30px; font-weight: bold; padding: 20px; border-width: 2px;">
-            PROCEED TO SLOT {{ slot.id }}
-        </div>
+    <!-- Environmental Facility Markings & Sensor Nodes -->
+    <div class="qr-facility-environment" aria-hidden="true">
+        <!-- Distant Architectural Lane Markings -->
+        <div class="facility-lane lane-top"></div>
+        <div class="facility-lane lane-bottom"></div>
+        
+        <!-- Faint Distant Parking Slot Outlines -->
+        <div class="facility-slot-outline bay-left"></div>
+        <div class="facility-slot-outline bay-right"></div>
 
-        <div
-            style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 30px; text-align: left;">
-            <div style="color: var(--text-dim); margin-bottom: 10px; font-size: 1.5rem;">
-                <span style="color: #fff;">Vehicle:</span> {{ slot.car_number }}
+        <!-- Ambient Facility Sensor Nodes (Slow Individual Pulses) -->
+        <div class="facility-sensor node-1"></div>
+        <div class="facility-sensor node-2"></div>
+        <div class="facility-sensor node-3"></div>
+        <div class="facility-sensor node-4"></div>
+
+        <!-- Subtle Moving Vehicle Silhouette in Background Lane -->
+        <div class="traffic-lane">
+            <div class="moving-vehicle">
+                <svg width="44" height="20" viewBox="0 0 44 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 14L8 6C8.8 4.5 10.5 3.5 12.5 3.5H28C30.2 3.5 32 4.7 32.8 6.5L37 13.5H41C42.1 13.5 43 14.4 43 15.5V17.5H1V15.5C1 14.4 1.9 13.5 3 13.5H4Z" fill="rgba(0, 195, 225, 0.12)" stroke="rgba(0, 195, 225, 0.3)" stroke-width="1"/>
+                    <circle cx="10.5" cy="17.5" r="2.5" fill="rgba(0, 195, 225, 0.4)"/>
+                    <circle cx="33.5" cy="17.5" r="2.5" fill="rgba(0, 195, 225, 0.4)"/>
+                    <path d="M12 5H27L31 12H9L12 5Z" fill="rgba(0, 242, 254, 0.08)"/>
+                    <rect x="38" y="14" width="3" height="1.5" rx="0.5" fill="rgba(0, 242, 254, 0.6)"/>
+                    <rect x="2" y="14" width="2" height="1.5" rx="0.5" fill="rgba(239, 68, 68, 0.5)"/>
+                </svg>
             </div>
-            <div style="color: var(--text-dim); font-size: 1.5rem;">
-                <span style="color: #fff;">Entry Time:</span> {{ slot.entry_time }}
-            </div>
         </div>
-
-        <p style="color: var(--led-yellow); margin-bottom: 15px; font-size: 1.3rem; font-weight: bold;">SCAN QR FOR MAP
-            DIRECTIONS</p>
-        <div style="background: white; padding: 15px; border-radius: 8px; display: inline-block; margin-bottom: 30px;">
-            <img src="{{ url_for('qr_image', session_id=slot.session_id) }}" alt="QR Code"
-                style="width: 250px; height: 250px;">
-        </div>
-
-        <a href="/dashboard" class="led-btn sm"
-            style="display: block; width: 100%; font-size: 1.3rem; padding: 15px;">BACK TO TERMINAL</a>
     </div>
+
+    <!-- Centered Full-Screen Automotive Terminal Wrapper -->
+    <main class="qr-page-wrapper">
+        <div class="qr-terminal-card">
+            <!-- HUD Corner Accents -->
+            <div class="hud-corner corner-tl"></div>
+            <div class="hud-corner corner-tr"></div>
+            <div class="hud-corner corner-bl"></div>
+            <div class="hud-corner corner-br"></div>
+            <div class="terminal-scan-sweep"></div>
+
+            <div class="qr-card-inner">
+                <!-- 1. Header Area: Status & Slot Focus -->
+                <header class="qr-header-module stagger-1">
+                    <div class="status-pill-amber">
+                        <span class="pulse-dot-amber"></span>
+                        <span class="status-pill-text">RESERVATION CONFIRMED</span>
+                    </div>
+
+                    <div class="slot-focus-group">
+                        <span class="slot-eyebrow">RESERVED PARKING BAY</span>
+                        <h1 class="slot-number-display">SLOT {{ slot.id }}</h1>
+                    </div>
+
+                    <div class="gate-navigation-prompt">
+                        <span>PROCEED TO ENTRY GATE</span>
+                        <span class="gate-arrow">&rarr;</span>
+                    </div>
+                </header>
+
+                <!-- 2. Spacious Vehicle & Entry Information Cards -->
+                <div class="info-cards-grid stagger-2">
+                    <!-- Vehicle Card -->
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                <line x1="2" y1="10" x2="22" y2="10"></line>
+                            </svg>
+                            <span>VEHICLE</span>
+                        </div>
+                        <div class="info-card-value font-mono" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                    </div>
+
+                    <!-- Entry Time Card -->
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>ENTRY TIME</span>
+                        </div>
+                        <div class="info-card-value font-mono">{{ slot.entry_time }}</div>
+                    </div>
+                </div>
+
+                <!-- 3. Hero Digital Entry Pass & QR Scanner Section -->
+                <section class="entry-pass-module stagger-3">
+                    <!-- Digital Pass Header Strip -->
+                    <div class="pass-header-strip">
+                        <div class="pass-title-wrap">
+                            <span class="pass-badge">DIGITAL ENTRY PASS</span>
+                            <span class="pass-instruction">SCAN AT ENTRY GATE</span>
+                        </div>
+                    </div>
+
+                    <!-- Pass Metadata Bar -->
+                    <div class="pass-metadata-bar">
+                        <div class="meta-item">
+                            <span class="meta-label">SLOT</span>
+                            <span class="meta-val font-mono">{{ slot.id }}</span>
+                        </div>
+                        <div class="meta-divider"></div>
+                        <div class="meta-item">
+                            <span class="meta-label">VEHICLE</span>
+                            <span class="meta-val font-mono">{{ slot.car_number }}</span>
+                        </div>
+                        <div class="meta-divider"></div>
+                        <div class="meta-item">
+                            <span class="meta-label">ENTRY</span>
+                            <span class="meta-val font-mono">{{ slot.entry_time.split(' ')[1] if ' ' in slot.entry_time else slot.entry_time }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Dedicated QR Scanner Frame -->
+                    <div class="qr-scanner-stage">
+                        <!-- Frame Corner Brackets -->
+                        <div class="bracket b-tl"></div>
+                        <div class="bracket b-tr"></div>
+                        <div class="bracket b-bl"></div>
+                        <div class="bracket b-br"></div>
+
+                        <!-- Animated Laser Scanner Line (Does not modify QR pixels) -->
+                        <div class="laser-scanner-line" aria-hidden="true"></div>
+
+                        <!-- High Contrast Pure White QR Wrapper -->
+                        <div class="qr-target-wrap">
+                            <img src="{{ url_for('qr_image', session_id=slot.session_id) }}" alt="Parking Entry QR Pass" class="qr-pass-image" width="210" height="210">
+                        </div>
+                    </div>
+
+                    <!-- Scan Armed Status -->
+                    <div class="scan-status-strip">
+                        <span class="pulse-dot-cyan"></span>
+                        <span class="scan-status-text">READY FOR SCAN</span>
+                    </div>
+                </section>
+
+                <!-- 4. Navigation Action Footer -->
+                <footer class="qr-footer-actions stagger-4">
+                    <a href="/dashboard" class="btn-terminal-back" title="Return to Dashboard">
+                        <span class="back-arrow">&larr;</span>
+                        <span>BACK TO CONTROL CENTER</span>
+                    </a>
+                </footer>
+            </div>
+        </div>
+    </main>
 </body>
 
 </html>

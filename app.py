@@ -4,7 +4,7 @@ import uuid
 import webbrowser
 from threading import Timer
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, session, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, send_file, jsonify
 import qrcode
 from io import BytesIO
 import socket
@@ -21,18 +21,16 @@ def get_local_ip():
 
 app = Flask(__name__)
 app.secret_key = 'smart_parking_super_secret'
-# Ensure absolute pathing for DB so the "Run" button works from any CWD
-BASE_DIR = os.path.dirname(os.path.abspath(__name__))
+# Ensure absolute pathing for DB so the app works regardless of CWD or WSGI runner
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, 'parking.db')
 
-def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+_db_initialized = False
 
 def init_db():
-    with app.app_context():
-        db = get_db()
+    global _db_initialized
+    db = sqlite3.connect(DATABASE)
+    try:
         cursor = db.cursor()
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS slots (
@@ -46,21 +44,41 @@ def init_db():
                 scan_time TEXT
             )
         ''')
-        # Check if slots exist
-        cursor.execute('SELECT COUNT(*) FROM slots')
-        count = cursor.fetchone()[0]
-        if count == 0:
-            for i in range(1, 51):
-                slot_id = f'S{i}'
-                cursor.execute(
-                    'INSERT INTO slots (id, status) VALUES (?, ?)',
-                    (slot_id, 'vacant')
-                )
+        
+        # Check if scan_time column exists for database migration
+        cursor.execute("PRAGMA table_info(slots)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if 'scan_time' not in columns:
+            cursor.execute("ALTER TABLE slots ADD COLUMN scan_time TEXT")
+
+        # Ensure all 100 slots (S1 to S100) exist in database without overwriting existing data
+        cursor.execute("SELECT id FROM slots")
+        existing_ids = set(row[0] for row in cursor.fetchall())
+        
+        missing_slots = [(f'S{i}', 'vacant') for i in range(1, 101) if f'S{i}' not in existing_ids]
+        if missing_slots:
+            cursor.executemany(
+                'INSERT INTO slots (id, status) VALUES (?, ?)',
+                missing_slots
+            )
         db.commit()
+        _db_initialized = True
+    finally:
+        db.close()
+
+def get_db():
+    if not _db_initialized:
+        init_db()
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Automatically initialize database and tables when app is loaded (essential for Gunicorn/Render)
+init_db()
 
 @app.before_request
 def require_login():
-    allowed_routes = ['login', 'static', 'qr', 'scan', 'gate_entry', 'qr_image']
+    allowed_routes = ['login', 'static', 'qr', 'scan', 'gate_entry', 'qr_image', 'api_dashboard_status']
     if request.endpoint not in allowed_routes and 'admin_logged_in' not in session:
         return redirect(url_for('login'))
 
@@ -101,6 +119,37 @@ def dashboard():
     
     return render_template('dashboard.html', slots=slots, total=total, vacant=vacant, reserved=reserved, occupied=occupied)
 
+@app.route('/api/dashboard-status')
+def api_dashboard_status():
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute('SELECT id, status, car_number, session_id, entry_time FROM slots ORDER BY CAST(SUBSTR(id, 2) AS INTEGER)')
+    slots = cursor.fetchall()
+    
+    total = len(slots)
+    vacant = sum(1 for s in slots if s['status'] == 'vacant')
+    reserved = sum(1 for s in slots if s['status'] == 'reserved')
+    occupied = sum(1 for s in slots if s['status'] == 'occupied')
+    
+    slots_data = [
+        {
+            'id': s['id'],
+            'status': s['status'],
+            'car_number': s['car_number'] or '',
+            'session_id': s['session_id'] or '',
+            'entry_time': s['entry_time'] or ''
+        }
+        for s in slots
+    ]
+    
+    return jsonify({
+        'total': total,
+        'vacant': vacant,
+        'reserved': reserved,
+        'occupied': occupied,
+        'slots': slots_data
+    })
+
 @app.route('/entry', methods=['POST'])
 def entry():
     car_number = request.form.get('car_number')
@@ -129,7 +178,7 @@ def entry():
     ''', (car_number, phone_number, entry_time, session_id, slot_id))
     db.commit()
     
-    return redirect(url_for('scan', session_id=session_id))
+    return redirect(url_for('qr', session_id=session_id))
 
 @app.route('/qr/<session_id>')
 def qr(session_id):
@@ -182,28 +231,17 @@ def scan(session_id):
     if not slot:
         return "Invalid or Expired Session", 404
         
+    already_scanned = False
     if slot['status'] == 'reserved':
         scan_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute("UPDATE slots SET status = 'occupied', scan_time = ? WHERE session_id = ?", (scan_time, session_id))
         db.commit()
+        cursor.execute('SELECT * FROM slots WHERE session_id = ?', (session_id,))
+        slot = cursor.fetchone()
+    elif slot['status'] == 'occupied':
+        already_scanned = True
         
-    slot_id = slot['id']
-    slot_coordinates = {
-        "S1": "10.955958,78.755894", "S2": "10.955958,78.755904", "S3": "10.955958,78.755914", "S4": "10.955958,78.755924", "S5": "10.955958,78.755934",
-        "S6": "10.955958,78.755944", "S7": "10.955958,78.755954", "S8": "10.955958,78.755964", "S9": "10.955958,78.755974", "S10": "10.955958,78.755984",
-        "S11": "10.955968,78.755894", "S12": "10.955968,78.755904", "S13": "10.955968,78.755914", "S14": "10.955968,78.755924", "S15": "10.955968,78.755934",
-        "S16": "10.955968,78.755944", "S17": "10.955968,78.755954", "S18": "10.955968,78.755964", "S19": "10.955968,78.755974", "S20": "10.955968,78.755984",
-        "S21": "10.955978,78.755894", "S22": "10.955978,78.755904", "S23": "10.955978,78.755914", "S24": "10.955978,78.755924", "S25": "10.955978,78.755934",
-        "S26": "10.955978,78.755944", "S27": "10.955978,78.755954", "S28": "10.955978,78.755964", "S29": "10.955978,78.755974", "S30": "10.955978,78.755984",
-        "S31": "10.955988,78.755894", "S32": "10.955988,78.755904", "S33": "10.955988,78.755914", "S34": "10.955988,78.755924", "S35": "10.955988,78.755934",
-        "S36": "10.955988,78.755944", "S37": "10.955988,78.755954", "S38": "10.955988,78.755964", "S39": "10.955988,78.755974", "S40": "10.955988,78.755984",
-        "S41": "10.955998,78.755894", "S42": "10.955998,78.755904", "S43": "10.955998,78.755914", "S44": "10.955998,78.755924", "S45": "10.955998,78.755934",
-        "S46": "10.955998,78.755944", "S47": "10.955998,78.755954", "S48": "10.955998,78.755964", "S49": "10.955998,78.755974", "S50": "10.955998,78.755984"
-    }
-    
-    coords = slot_coordinates.get(slot_id, "10.955958,78.755894")
-    maps_url = f"https://www.google.com/maps/dir/?api=1&destination={coords}"
-    return redirect(maps_url)
+    return render_template('scan.html', slot=slot, already_scanned=already_scanned)
 
 @app.route('/gate/entry')
 def gate_entry():

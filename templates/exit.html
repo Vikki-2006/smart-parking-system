@@ -4,35 +4,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exit Processing - Smart Parking</title>
+    <title>Exit Processing - Smart Parking Control Center</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body class="dark-theme">
-    <div class="login-container led-box">
-        <h1 class="led-text" style="color: var(--led-yellow); text-shadow: 0 0 10px var(--led-yellow);">EXIT SUMMARY
-        </h1>
+<body class="dark-theme exit-page-body">
+    <!-- Ambient Parking Facility Background Environment -->
+    <div class="exit-bg-grid" aria-hidden="true"></div>
+    <div class="exit-bg-glow" aria-hidden="true"></div>
+    <div class="exit-bg-scanline" aria-hidden="true"></div>
 
-        <div
-            style="text-align: left; margin: 20px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;">
-            <p style="margin-bottom: 10px; font-size: 1.1rem;"><span style="color: var(--text-dim);">Slot:</span> {{
-                slot.id }}</p>
-            <p style="margin-bottom: 10px; font-size: 1.1rem;"><span style="color: var(--text-dim);">Vehicle:</span> {{
-                slot.car_number }}</p>
-            <p style="margin-bottom: 10px; font-size: 1.1rem;"><span style="color: var(--text-dim);">Entry:</span> {{
-                slot.entry_time }}</p>
-            <p style="margin-bottom: 10px; font-size: 1.1rem;"><span style="color: var(--text-dim);">Duration:</span> {{
-                duration }}</p>
+    <!-- Environmental Facility Markings & Sensor Nodes -->
+    <div class="exit-facility-environment" aria-hidden="true">
+        <div class="facility-lane lane-top"></div>
+        <div class="facility-lane lane-bottom"></div>
+        <div class="facility-slot-outline bay-left"></div>
+        <div class="facility-slot-outline bay-right"></div>
+
+        <!-- Ambient Facility Sensor Nodes -->
+        <div class="facility-sensor node-1"></div>
+        <div class="facility-sensor node-2"></div>
+        <div class="facility-sensor node-3"></div>
+        <div class="facility-sensor node-4"></div>
+
+        <!-- Subtle Moving Background Vehicle Silhouette -->
+        <div class="traffic-lane">
+            <div class="moving-vehicle">
+                <svg width="44" height="20" viewBox="0 0 44 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 14L8 6C8.8 4.5 10.5 3.5 12.5 3.5H28C30.2 3.5 32 4.7 32.8 6.5L37 13.5H41C42.1 13.5 43 14.4 43 15.5V17.5H1V15.5C1 14.4 1.9 13.5 3 13.5H4Z" fill="rgba(0, 195, 225, 0.12)" stroke="rgba(0, 195, 225, 0.3)" stroke-width="1"/>
+                    <circle cx="10.5" cy="17.5" r="2.5" fill="rgba(0, 195, 225, 0.4)"/>
+                    <circle cx="33.5" cy="17.5" r="2.5" fill="rgba(0, 195, 225, 0.4)"/>
+                    <path d="M12 5H27L31 12H9L12 5Z" fill="rgba(0, 242, 254, 0.08)"/>
+                    <rect x="38" y="14" width="3" height="1.5" rx="0.5" fill="rgba(0, 242, 254, 0.6)"/>
+                    <rect x="2" y="14" width="2" height="1.5" rx="0.5" fill="rgba(239, 68, 68, 0.5)"/>
+                </svg>
+            </div>
         </div>
-
-        <div class="stat yellow-text" style="margin-bottom: 30px;">TOTAL AMOUNT <span>₹{{ amount }}</span></div>
-
-        <form action="/process_exit" method="POST">
-            <input type="hidden" name="slot_id" value="{{ slot.id }}">
-            <button type="submit" class="led-btn green">PAYMENT RECEIVED & OPEN BARRIER</button>
-            <a href="/dashboard" class="led-btn red" style="margin-top: 15px; display: block;">CANCEL</a>
-        </form>
     </div>
+
+    <!-- Centered Full-Screen Exit Terminal Wrapper -->
+    <main class="exit-page-wrapper">
+        <div class="exit-terminal-card">
+            <!-- HUD Corner Accents -->
+            <div class="hud-corner corner-tl"></div>
+            <div class="hud-corner corner-tr"></div>
+            <div class="hud-corner corner-bl"></div>
+            <div class="hud-corner corner-br"></div>
+            <div class="terminal-scan-sweep"></div>
+
+            <div class="exit-card-inner">
+                <!-- 1. Header Module -->
+                <header class="exit-header-module stagger-1">
+                    <div class="status-pill-cyan">
+                        <span class="pulse-dot-cyan"></span>
+                        <span class="status-pill-text">EXIT PROCESSING</span>
+                    </div>
+
+                    <div class="exit-title-group">
+                        <span class="exit-eyebrow">PARKING EGRESS TERMINAL</span>
+                        <h1 class="exit-main-title">EXIT SUMMARY</h1>
+                    </div>
+                </header>
+
+                <!-- 2. Three-Step Exit Flow Indicator -->
+                <div class="exit-flow-stepper stagger-2" aria-label="Exit Process Steps">
+                    <div class="step-item step-completed">
+                        <span class="step-icon-wrap">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </span>
+                        <span class="step-label">VERIFIED</span>
+                    </div>
+                    <div class="step-line line-active"></div>
+                    <div class="step-item step-current">
+                        <span class="step-dot-amber"></span>
+                        <span class="step-label">PAYMENT</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-item step-pending">
+                        <span class="step-dot-muted"></span>
+                        <span class="step-label">BARRIER</span>
+                    </div>
+                </div>
+
+                <!-- 3. Vehicle & Parking Data Cards (2x2 Grid) -->
+                <div class="exit-data-grid stagger-3">
+                    <!-- Slot ID -->
+                    <div class="exit-data-card">
+                        <div class="data-card-label">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="3"></rect>
+                                <path d="M7 10h10M7 14h10M10 7v10"></path>
+                            </svg>
+                            <span>SLOT ID</span>
+                        </div>
+                        <div class="data-card-value font-mono text-cyan">{{ slot.id }}</div>
+                    </div>
+
+                    <!-- Vehicle Registration -->
+                    <div class="exit-data-card">
+                        <div class="data-card-label">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                <line x1="2" y1="10" x2="22" y2="10"></line>
+                            </svg>
+                            <span>VEHICLE</span>
+                        </div>
+                        <div class="data-card-value font-mono" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                    </div>
+
+                    <!-- Entry Timestamp -->
+                    <div class="exit-data-card">
+                        <div class="data-card-label">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>ENTRY TIME</span>
+                        </div>
+                        <div class="data-card-value font-mono text-muted">{{ slot.entry_time }}</div>
+                    </div>
+
+                    <!-- Parking Duration -->
+                    <div class="exit-data-card">
+                        <div class="data-card-label">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 14 14"></polyline>
+                                <path d="M12 2v2"></path>
+                            </svg>
+                            <span>DURATION</span>
+                        </div>
+                        <div class="data-card-value font-mono">{{ duration }}</div>
+                    </div>
+                </div>
+
+                <!-- 4. Compact Parking Exit Transit Visual -->
+                <div class="exit-transit-visual stagger-3" aria-hidden="true">
+                    <span class="transit-point">BAY {{ slot.id }}</span>
+                    <div class="transit-track">
+                        <div class="transit-car-icon">
+                            <svg width="24" height="12" viewBox="0 0 24 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2 9L5 4C5.5 3 6.5 2.5 8 2.5H16C17.5 2.5 18.5 3 19 4L22 9H23C23.5 9 24 9.5 24 10V11H0V10C0 9.5 0.5 9 1 9H2Z" fill="#00f2fe"/>
+                                <circle cx="6" cy="11" r="1.5" fill="#f8fafc"/>
+                                <circle cx="18" cy="11" r="1.5" fill="#f8fafc"/>
+                            </svg>
+                        </div>
+                        <div class="transit-line"></div>
+                        <span class="transit-arrow">&rarr;</span>
+                    </div>
+                    <span class="transit-point text-amber">GATE EGRESS</span>
+                </div>
+
+                <!-- 5. Dedicated Total Payment Card -->
+                <div class="exit-payment-card stagger-4">
+                    <div class="payment-card-top">
+                        <span class="payment-due-label">TOTAL AMOUNT DUE</span>
+                        <div class="payment-status-pill">
+                            <span class="pulse-dot-amber"></span>
+                            <span class="payment-status-text">PAYMENT PENDING</span>
+                        </div>
+                    </div>
+
+                    <div class="payment-amount-display">
+                        <span class="currency-symbol">₹</span>
+                        <span class="amount-number" id="amountDisplay" data-target="{{ amount }}">{{ amount }}</span>
+                    </div>
+
+                    <div class="payment-rate-sub">
+                        <span>Rate: ₹50 / hr &bull; Smart Barrier Integration</span>
+                    </div>
+                </div>
+
+                <!-- 6. Action Buttons (Form Submission & Cancel) -->
+                <footer class="exit-actions-module stagger-5">
+                    <form action="/process_exit" method="POST" class="exit-action-form">
+                        <input type="hidden" name="slot_id" value="{{ slot.id }}">
+                        
+                        <button type="submit" class="btn-exit-pay" id="btnPayExit">
+                            <span>PAYMENT RECEIVED & OPEN BARRIER</span>
+                            <span class="btn-cta-arrow">&rarr;</span>
+                        </button>
+
+                        <a href="/dashboard" class="btn-exit-cancel" title="Cancel and Return to Dashboard">
+                            <span>CANCEL</span>
+                        </a>
+                    </form>
+                </footer>
+            </div>
+        </div>
+    </main>
+
+    <!-- Subtle Amount Entrance Count-Up Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const amountEl = document.getElementById('amountDisplay');
+            if (amountEl) {
+                const target = parseInt(amountEl.getAttribute('data-target'), 10) || 0;
+                if (target === 0) return;
+                
+                let startTimestamp = null;
+                const duration = 500;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+                    amountEl.textContent = Math.floor(easeOut * target);
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        amountEl.textContent = target;
+                    }
+                };
+                window.requestAnimationFrame(step);
+            }
+        });
+    </script>
 </body>
 
 </html>

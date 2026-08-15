@@ -4,26 +4,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phone Scan - Smart Parking</title>
+    <title>Entry Scan - Smart Parking</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body class="dark-theme"
     style="display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; text-align: center;">
-    <div class="login-container led-box" style="width: 100%; max-width: 400px; padding: 40px 20px;">
-        <h1 class="led-text"
-            style="color: var(--led-green); text-shadow: 0 0 10px var(--led-green); margin-bottom: 20px; font-size: 2.5rem;">
-            ACCESS GRANTED</h1>
-        <p
-            style="color: var(--led-blue); font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; margin-top: 30px;">
-            Park your vehicle.</p>
+    
+    <div class="login-container led-box" style="width: 100%; max-width: 460px; padding: 36px 28px;">
+        {% if already_scanned %}
+        <h1 class="led-text" style="color: var(--amber); margin-bottom: 16px; font-size: 1.6rem; justify-content: center;">
+            <span class="status-dot" style="background-color: var(--amber); box-shadow: 0 0 10px var(--amber);"></span>
+            ENTRY ALREADY CONFIRMED
+        </h1>
+        <p style="color: var(--muted); font-size: 0.95rem; margin-bottom: 24px;">
+            This QR code has already been scanned for entry.
+        </p>
+        {% else %}
+        <h1 class="led-text" style="color: var(--green); margin-bottom: 16px; font-size: 1.6rem; justify-content: center;">
+            <span class="status-dot" style="background-color: var(--green); box-shadow: 0 0 10px var(--green);"></span>
+            ENTRY CONFIRMED
+        </h1>
+        <p style="color: var(--cyan); font-size: 1rem; margin-bottom: 24px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 1px;">
+            Vehicle Status Updated to Occupied
+        </p>
+        {% endif %}
+
+        <div style="background: #090e18; padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 28px; text-align: left; font-family: var(--font-mono);">
+            <div style="color: var(--muted); margin-bottom: 10px; font-size: 0.95rem;">
+                <span style="color: var(--text);">Assigned Slot:</span> <strong style="color: var(--cyan);">{{ slot.id }}</strong>
+            </div>
+            <div style="color: var(--muted); margin-bottom: 10px; font-size: 0.95rem;">
+                <span style="color: var(--text);">Vehicle Number:</span> <strong style="color: var(--text);">{{ slot.car_number }}</strong>
+            </div>
+            <div style="color: var(--muted); font-size: 0.95rem;">
+                <span style="color: var(--text);">Current Status:</span> <strong style="color: var(--red);">OCCUPIED 🔴</strong>
+            </div>
+        </div>
+
+        <a href="/dashboard" class="led-btn blue" style="width: 100%;">RETURN TO TERMINAL</a>
     </div>
 
-    <script>
-        setTimeout(function () {
-            window.location.href = "{{ maps_url|safe }}";
-        }, 3000);
-    </script>
 </body>
 
 </html>
