@@ -9,84 +9,77 @@
     <meta http-equiv="refresh" content="3;url=/dashboard" />
     <style>
         .barrier-container {
-            width: 200px;
+            width: 220px;
             height: 150px;
-            margin: 30px auto;
+            margin: 28px auto;
             position: relative;
-            border-bottom: 4px solid var(--border-color);
+            border-bottom: 2px solid var(--border);
         }
 
         .barrier-post {
-            width: 20px;
+            width: 24px;
             height: 100px;
-            background: #444;
+            background: #161e31;
             position: absolute;
             bottom: 0;
             left: 20px;
-            border-radius: 4px 4px 0 0;
-            border: 2px solid var(--border-color);
+            border-radius: 6px 6px 0 0;
+            border: 1px solid var(--cyan);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.15);
         }
 
         .barrier-arm {
-            width: 150px;
-            height: 15px;
+            width: 160px;
+            height: 14px;
             background: repeating-linear-gradient(45deg,
-                    var(--led-yellow),
-                    var(--led-yellow) 10px,
-                    #000 10px,
-                    #000 20px);
+                    var(--amber),
+                    var(--amber) 12px,
+                    #080b11 12px,
+                    #080b11 24px);
             position: absolute;
             bottom: 80px;
-            left: 30px;
+            left: 32px;
             transform-origin: 0% 50%;
-            border: 1px solid var(--led-yellow);
-            box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+            border: 1px solid var(--amber);
+            box-shadow: 0 0 12px var(--amber-glow);
             animation: liftBarrier 2.5s forwards ease-in-out;
+            border-radius: 4px;
         }
 
         @keyframes liftBarrier {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            20% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(-85deg);
-            }
+            0% { transform: rotate(0deg); }
+            20% { transform: rotate(0deg); }
+            100% { transform: rotate(-85deg); }
         }
     </style>
 </head>
 
 <body class="dark-theme">
-    <div class="login-container led-box" style="max-width: 600px; padding: 40px;">
-        <h1 class="led-text"
-            style="color: var(--led-green); text-shadow: 0 0 10px var(--led-green); margin-bottom: 10px;">ACCESS GRANTED
+    <div class="login-container led-box" style="max-width: 520px; padding: 36px;">
+        <h1 class="led-text" style="color: var(--green); margin-bottom: 10px; justify-content: center;">
+            <span class="status-dot" style="background-color: var(--green); box-shadow: 0 0 10px var(--green);"></span>
+            ACCESS GRANTED
         </h1>
-        <p
-            style="color: var(--led-blue); margin-bottom: 25px; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px;">
-            Barrier Opening...</p>
+        <p style="color: var(--cyan); margin-bottom: 24px; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 1.5px; font-family: var(--font-mono);">
+            Barrier Opening...
+        </p>
 
         <div class="barrier-container">
             <div class="barrier-post"></div>
             <div class="barrier-arm"></div>
         </div>
 
-        <div
-            style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 30px; text-align: left;">
-            <div style="color: var(--text-dim); margin-bottom: 15px; font-size: 1.5rem;">
-                <span style="color: #fff;">Vehicle Number:</span> {{ slot.car_number }}
+        <div style="background: #090e18; padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 24px; text-align: left; font-family: var(--font-mono);">
+            <div style="color: var(--muted); margin-bottom: 12px; font-size: 0.95rem;">
+                <span style="color: var(--text);">Vehicle Number:</span> <strong style="color: var(--cyan);">{{ slot.car_number }}</strong>
             </div>
-            <div style="color: var(--text-dim); margin-bottom: 15px; font-size: 1.5rem;">
-                <span style="color: #fff;">Date & Time:</span> {{ slot.scan_time }}
+            <div style="color: var(--muted); margin-bottom: 12px; font-size: 0.95rem;">
+                <span style="color: var(--text);">Date & Time:</span> <span style="color: var(--text);">{{ slot.scan_time }}</span>
             </div>
-            <div style="color: var(--text-dim); font-size: 1.5rem;">
-                <span style="color: #fff;">Location:</span> XQ34+PVC, Irungalur, Tamil Nadu 621105
+            <div style="color: var(--muted); font-size: 0.95rem;">
+                <span style="color: var(--text);">Location:</span> Irungalur, Tamil Nadu 621105
             </div>
         </div>
-
     </div>
 </body>
 

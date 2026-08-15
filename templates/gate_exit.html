@@ -4,22 +4,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gate Exit - Smart Parking</title>
+    <title>Exit Completed - Smart Parking Control Center</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body class="dark-theme">
-    <div class="login-container led-box">
-        <h1 class="led-text" style="color: var(--led-green); text-shadow: 0 0 10px var(--led-green);">HAVE A SAFE
-            JOURNEY</h1>
-        <p style="color: var(--text-dim); margin-bottom: 20px; font-size: 1.2rem;">Barrier Opening...</p>
+<body class="dark-theme gate-exit-body">
+    <!-- Ambient Parking Facility Background Environment -->
+    <div class="gate-exit-bg-grid" aria-hidden="true"></div>
+    <div class="gate-exit-bg-glow" aria-hidden="true"></div>
+    <div class="gate-exit-bg-scanline" aria-hidden="true"></div>
 
-        <div class="success-msg" style="font-size: 1.5rem; margin-bottom: 30px; font-weight: bold;">
-            VEHICLE EXITED SUCCESSFULLY
+    <!-- Environmental Facility Markings & Sensor Nodes -->
+    <div class="gate-exit-facility-env" aria-hidden="true">
+        <div class="facility-lane lane-top"></div>
+        <div class="facility-lane lane-bottom"></div>
+        <div class="facility-slot-outline bay-left"></div>
+        <div class="facility-slot-outline bay-right"></div>
+
+        <!-- Ambient Facility Sensor Nodes -->
+        <div class="facility-sensor node-1"></div>
+        <div class="facility-sensor node-2"></div>
+        <div class="facility-sensor node-3"></div>
+        <div class="facility-sensor node-4"></div>
+
+        <!-- Subtle Moving Background Vehicle Silhouette -->
+        <div class="traffic-lane">
+            <div class="moving-vehicle">
+                <svg width="44" height="20" viewBox="0 0 44 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 14L8 6C8.8 4.5 10.5 3.5 12.5 3.5H28C30.2 3.5 32 4.7 32.8 6.5L37 13.5H41C42.1 13.5 43 14.4 43 15.5V17.5H1V15.5C1 14.4 1.9 13.5 3 13.5H4Z" fill="rgba(0, 195, 225, 0.12)" stroke="rgba(0, 195, 225, 0.3)" stroke-width="1"/>
+                    <circle cx="10.5" cy="17.5" r="2.5" fill="rgba(0, 195, 225, 0.4)"/>
+                    <circle cx="33.5" cy="17.5" r="2.5" fill="rgba(0, 195, 225, 0.4)"/>
+                    <path d="M12 5H27L31 12H9L12 5Z" fill="rgba(0, 242, 254, 0.08)"/>
+                    <rect x="38" y="14" width="3" height="1.5" rx="0.5" fill="rgba(0, 242, 254, 0.6)"/>
+                    <rect x="2" y="14" width="2" height="1.5" rx="0.5" fill="rgba(239, 68, 68, 0.5)"/>
+                </svg>
+            </div>
         </div>
-
-        <a href="/dashboard" class="led-btn sm">BACK TO TERMINAL</a>
     </div>
+
+    <!-- Centered Full-Screen Gate Exit Terminal Wrapper -->
+    <main class="gate-exit-wrapper">
+        <div class="gate-exit-card">
+            <!-- HUD Corner Accents -->
+            <div class="hud-corner corner-tl"></div>
+            <div class="hud-corner corner-tr"></div>
+            <div class="hud-corner corner-bl"></div>
+            <div class="hud-corner corner-br"></div>
+            <div class="terminal-scan-sweep"></div>
+
+            <div class="gate-exit-inner">
+                <!-- 1. Success Icon & Status Header -->
+                <header class="gate-exit-header stagger-1">
+                    <div class="status-pill-green">
+                        <span class="pulse-dot-green"></span>
+                        <span class="status-pill-text">EXIT COMPLETED</span>
+                    </div>
+
+                    <!-- Glowing Circular Success Checkmark Icon -->
+                    <div class="success-check-badge">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+
+                    <div class="gate-exit-title-group">
+                        <h1 class="gate-exit-main-title">HAVE A SAFE JOURNEY</h1>
+                        <span class="gate-exit-sub">VEHICLE EXITED SUCCESSFULLY</span>
+                    </div>
+
+                    <!-- Gate Status Pill -->
+                    <div class="gate-barrier-status">
+                        <span class="barrier-pulse-dot"></span>
+                        <span class="barrier-text">BARRIER OPEN &bull; EXIT GATE READY</span>
+                    </div>
+                </header>
+
+                <!-- 2. Four-Step Lifecycle Status Timeline -->
+                <div class="lifecycle-timeline stagger-2" aria-label="Parking Lifecycle Status">
+                    <div class="timeline-step step-done">
+                        <span class="timeline-check">✓</span>
+                        <span class="timeline-label">ENTRY</span>
+                    </div>
+                    <div class="timeline-line"></div>
+                    <div class="timeline-step step-done">
+                        <span class="timeline-check">✓</span>
+                        <span class="timeline-label">PARKED</span>
+                    </div>
+                    <div class="timeline-line"></div>
+                    <div class="timeline-step step-done">
+                        <span class="timeline-check">✓</span>
+                        <span class="timeline-label">PAYMENT</span>
+                    </div>
+                    <div class="timeline-line"></div>
+                    <div class="timeline-step step-done">
+                        <span class="timeline-check">✓</span>
+                        <span class="timeline-label">EXIT</span>
+                    </div>
+                </div>
+
+                <!-- 3. Success Summary Message Box -->
+                <div class="success-message-box stagger-3">
+                    <p class="msg-primary">Your parking session has been completed successfully.</p>
+                    <p class="msg-secondary">Thank you for using Smart Parking.</p>
+                </div>
+
+                <!-- 4. Navigation Action Footer (No Arrows) -->
+                <footer class="gate-exit-actions stagger-4">
+                    <a href="/dashboard" class="btn-gate-exit-back" title="Return to Dashboard">
+                        <span>BACK TO CONTROL CENTER</span>
+                    </a>
+                </footer>
+            </div>
+        </div>
+    </main>
 </body>
 
 </html>

@@ -1,26 +1,1020 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - Smart Parking</title>
+    <title>Admin Login - Smart Parking Control Center</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+    /* ===================================================================
+       SMART PARKING CONTROL CENTER — PREMIUM LIVE BACKGROUND
+       Pure CSS / lightweight SVG — NO mouse tracking, NO parallax
+       =================================================================== */
+
+    /* ---------- SCENE ---------- */
+    .bg-scene {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+        /* Rich deep-navy base with subtle bottom vignette */
+        background:
+            radial-gradient(ellipse 160% 90% at 50% 115%,
+                rgba(2,8,20,1) 0%, rgba(5,10,22,1) 50%, rgba(2,6,15,1) 100%);
+    }
+
+    /* ---------- ATMOSPHERIC ORBS (slow, autonomous) ---------- */
+    .bg-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(60px);
+        will-change: opacity, transform;
+    }
+    /* Left orb — teal */
+    .orb-l {
+        width: 420px; height: 420px;
+        left: -100px; top: 30%;
+        background: radial-gradient(circle, rgba(0,180,210,0.055) 0%, transparent 70%);
+        animation: orbDrift 22s ease-in-out infinite alternate;
+    }
+    /* Right orb — emerald */
+    .orb-r {
+        width: 380px; height: 380px;
+        right: -80px; top: 25%;
+        background: radial-gradient(circle, rgba(16,180,120,0.04) 0%, transparent 70%);
+        animation: orbDrift 28s ease-in-out 6s infinite alternate-reverse;
+    }
+    /* Top-center orb — blue */
+    .orb-t {
+        width: 500px; height: 280px;
+        left: 50%; top: -80px;
+        transform: translateX(-50%);
+        background: radial-gradient(circle, rgba(0,100,200,0.038) 0%, transparent 70%);
+        animation: orbBreath 18s ease-in-out 2s infinite alternate;
+    }
+    /* Floor orb — follows car zone */
+    .orb-floor {
+        width: 600px; height: 180px;
+        left: 50%; bottom: 14%;
+        transform: translateX(-50%);
+        background: radial-gradient(ellipse, rgba(0,180,210,0.032) 0%, transparent 65%);
+        animation: orbBreath 12s ease-in-out 1s infinite alternate;
+    }
+
+    @keyframes orbDrift {
+        from { opacity: 0.55; transform: translateY(0px);   }
+        to   { opacity: 1;    transform: translateY(-30px);  }
+    }
+    @keyframes orbBreath {
+        from { opacity: 0.45; }
+        to   { opacity: 1; }
+    }
+
+    /* ---------- GRIDS ---------- */
+    .bg-grid {
+        position: absolute;
+        inset: -44px;
+        background-image:
+            linear-gradient(rgba(0,200,235,0.020) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,200,235,0.020) 1px, transparent 1px);
+        background-size: 44px 44px;
+        animation: gridDrift 32s linear infinite;
+        will-change: transform;
+    }
+    .bg-grid-coarse {
+        position: absolute;
+        inset: -80px;
+        background-image:
+            linear-gradient(rgba(0,200,235,0.042) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,200,235,0.042) 1px, transparent 1px);
+        background-size: 220px 220px;
+        animation: gridDrift 55s linear infinite;
+    }
+    @keyframes gridDrift {
+        0%   { transform: translateY(0); }
+        100% { transform: translateY(44px); }
+    }
+
+    /* ---------- HORIZON ---------- */
+    .bg-horizon {
+        position: absolute;
+        bottom: 22%;
+        left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%, rgba(0,200,235,0.06) 8%,
+            rgba(0,200,235,0.16) 30%, rgba(0,200,235,0.22) 50%,
+            rgba(0,200,235,0.16) 70%, rgba(0,200,235,0.06) 92%, transparent 100%);
+        animation: horizonPulse 10s ease-in-out infinite alternate;
+    }
+    @keyframes horizonPulse {
+        from { opacity: 0.6; }
+        to   { opacity: 1; }
+    }
+
+    /* ---------- PARKING ROAD LANES ---------- */
+    .bg-road-primary {
+        position: absolute;
+        width: 100%; height: 2px;
+        bottom: 22%;
+        background: linear-gradient(90deg,
+            transparent 0%, rgba(0,200,235,0.10) 8%,
+            rgba(0,200,235,0.20) 30%, rgba(0,200,235,0.26) 50%,
+            rgba(0,200,235,0.20) 70%, rgba(0,200,235,0.10) 92%, transparent 100%);
+    }
+    .bg-road-secondary {
+        position: absolute;
+        width: 100%; height: 1px;
+        bottom: 30%;
+        background: linear-gradient(90deg,
+            transparent 0%, rgba(0,200,235,0.05) 10%,
+            rgba(0,200,235,0.10) 30%, rgba(0,200,235,0.13) 50%,
+            rgba(0,200,235,0.10) 70%, rgba(0,200,235,0.05) 90%, transparent 100%);
+        opacity: 0.6;
+    }
+    .bg-road-dashes {
+        position: absolute;
+        width: 100%; height: 2px;
+        bottom: calc(22% + 16px);
+        display: flex;
+        overflow: hidden;
+    }
+    .road-dash {
+        flex-shrink: 0;
+        height: 2px; width: 30px;
+        margin-right: 24px;
+        background: rgba(0,200,235,0.07);
+        border-radius: 1px;
+    }
+
+    /* Lane energy sweep — a bright thin pulse that runs along the road */
+    .lane-sweep {
+        position: absolute;
+        width: 80px; height: 2px;
+        bottom: 22%;
+        background: linear-gradient(90deg, transparent, rgba(0,210,245,0.55), transparent);
+        animation: laneSweep 9s linear infinite;
+        opacity: 0;
+    }
+    .lane-sweep-2 {
+        animation-delay: 4.5s;
+        background: linear-gradient(90deg, transparent, rgba(16,185,120,0.45), transparent);
+    }
+    @keyframes laneSweep {
+        0%   { left: -80px; opacity: 0; }
+        4%   { opacity: 1; }
+        92%  { opacity: 0.8; }
+        100% { left: 102%; opacity: 0; }
+    }
+
+    /* ---------- PARKING SLOT OUTLINES ---------- */
+    .bg-slots-floor {
+        position: absolute;
+        bottom: 22%;
+        left: 0; right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        padding: 0 6%;
+        pointer-events: none;
+    }
+    .bg-slot {
+        flex-shrink: 0;
+        width: 62px; height: 100px;
+        border: 1px solid rgba(0,200,235,0.07);
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        position: relative;
+        opacity: 0;
+        animation: slotReveal 1.1s ease forwards;
+    }
+    .bg-slot:nth-child(1)  { animation-delay: 0.3s; }
+    .bg-slot:nth-child(2)  { animation-delay: 0.48s; }
+    .bg-slot:nth-child(3)  { animation-delay: 0.66s; }
+    .bg-slot:nth-child(4)  { animation-delay: 0.84s; }
+    .bg-slot:nth-child(5)  { animation-delay: 1.02s; }
+    .bg-slot:nth-child(6)  { animation-delay: 1.20s; }
+    .bg-slot:nth-child(7)  { animation-delay: 1.38s; }
+    .bg-slot:nth-child(8)  { animation-delay: 1.56s; }
+    .bg-slot:nth-child(9)  { animation-delay: 1.74s; }
+    .bg-slot:nth-child(10) { animation-delay: 1.92s; }
+    @keyframes slotReveal {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .bg-slot.av { border-color: rgba(16,185,129,0.15); animation-name: slotReveal, slotGlowAv; animation-duration: 1.1s, 6s; animation-timing-function: ease, ease-in-out; animation-fill-mode: forwards, none; animation-iteration-count: 1, infinite; }
+    .bg-slot.rs { border-color: rgba(245,158,11,0.15);  animation-name: slotReveal, slotGlowRs; animation-duration: 1.1s, 7s; animation-timing-function: ease, ease-in-out; animation-fill-mode: forwards, none; animation-iteration-count: 1, infinite; }
+    .bg-slot.oc { border-color: rgba(239,68,68,0.15);   animation-name: slotReveal, slotGlowOc; animation-duration: 1.1s, 5s; animation-timing-function: ease, ease-in-out; animation-fill-mode: forwards, none; animation-iteration-count: 1, infinite; }
+    /* Slot border glow bursts — each status has own keyframe to keep property-specific */
+    @keyframes slotGlowAv {
+        0%,100% { border-color: rgba(16,185,129,0.12); }
+        50%      { border-color: rgba(16,185,129,0.32); box-shadow: 0 0 8px rgba(16,185,129,0.08); }
+    }
+    @keyframes slotGlowRs {
+        0%,100% { border-color: rgba(245,158,11,0.12); }
+        50%      { border-color: rgba(245,158,11,0.32); box-shadow: 0 0 8px rgba(245,158,11,0.08); }
+    }
+    @keyframes slotGlowOc {
+        0%,100% { border-color: rgba(239,68,68,0.12); }
+        50%      { border-color: rgba(239,68,68,0.30); box-shadow: 0 0 8px rgba(239,68,68,0.07); }
+    }
+
+    /* Status pip */
+    .s-pip {
+        position: absolute;
+        top: 7px; left: 50%;
+        transform: translateX(-50%);
+        width: 5px; height: 5px;
+        border-radius: 50%;
+    }
+    .av .s-pip { background: rgba(16,185,129,0.72); animation: pipBlink 4s ease-in-out infinite; }
+    .rs .s-pip { background: rgba(245,158,11,0.72);  animation: pipBlink 5.5s ease-in-out 1.2s infinite; }
+    .oc .s-pip { background: rgba(239,68,68,0.72);   animation: pipBlink 3.5s ease-in-out 0.6s infinite; }
+    @keyframes pipBlink {
+        0%,100% { opacity: 0.9; transform: translateX(-50%) scale(1); }
+        45%,55% { opacity: 0.35; transform: translateX(-50%) scale(0.75); }
+    }
+    .s-id {
+        position: absolute;
+        bottom: 6px; left: 50%;
+        transform: translateX(-50%);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.55rem; font-weight: 700;
+        letter-spacing: 0.4px; white-space: nowrap;
+    }
+    .av .s-id { color: rgba(16,185,129,0.38); }
+    .rs .s-id { color: rgba(245,158,11,0.38); }
+    .oc .s-id { color: rgba(239,68,68,0.38);  }
+
+    /* ---------- SENSOR NODES ---------- */
+    .snode { position: absolute; }
+    .snode-core {
+        position: absolute;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: coreBreath 4s ease-in-out infinite;
+    }
+    @keyframes coreBreath {
+        0%,100% { opacity: 0.9; transform: translate(-50%,-50%) scale(1); }
+        50%      { opacity: 0.45; transform: translate(-50%,-50%) scale(0.7); }
+    }
+    .snode-ring {
+        position: absolute;
+        border-radius: 50%;
+        border-style: solid; border-width: 1px;
+        transform: translate(-50%, -50%) scale(0);
+        animation: ringExpand 3.8s ease-out infinite;
+    }
+    @keyframes ringExpand {
+        0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.55; }
+        80%  { opacity: 0.15; }
+        100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+    }
+
+    /* ---------- DATA DOTS — horizontal with comet tail ---------- */
+    .data-dot {
+        position: absolute;
+        height: 3px; width: 3px;
+        border-radius: 50%;
+        bottom: calc(22% - 1px);
+        animation: dataTravelH 10s linear infinite;
+        /* comet tail via box-shadow offset */
+    }
+    .data-dot::after {
+        content: '';
+        position: absolute;
+        right: 100%; top: 0;
+        height: 3px; width: 18px;
+        background: linear-gradient(to left, currentColor, transparent);
+        border-radius: 2px;
+        opacity: 0.35;
+    }
+    @keyframes dataTravelH {
+        0%   { left: -24px; opacity: 0; }
+        3%   { opacity: 1; }
+        95%  { opacity: 0.7; }
+        100% { left: 103%; opacity: 0; }
+    }
+
+    /* ---------- VERTICAL DATA SIGNALS ---------- */
+    .data-vsignal {
+        position: absolute;
+        width: 1px;
+        background: linear-gradient(to bottom, transparent 0%, rgba(0,200,235,0.55) 50%, transparent 100%);
+        animation: dataSignalV 7s ease-in-out infinite;
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    @keyframes dataSignalV {
+        0%   { transform: translateY(-30px); opacity: 0; }
+        8%   { opacity: 0.65; }
+        88%  { opacity: 0.4; }
+        100% { transform: translateY(35vh); opacity: 0; }
+    }
+
+    /* ---------- SCANLINES ---------- */
+    .bg-scanline {
+        position: absolute;
+        width: 100%; height: 1.5px;
+        background: linear-gradient(90deg,
+            transparent 0%, rgba(0,200,235,0.04) 15%,
+            rgba(0,200,235,0.10) 50%,
+            rgba(0,200,235,0.04) 85%, transparent 100%);
+        top: 0;
+        animation: scanlineSweep 16s linear infinite;
+    }
+    /* Second scanline offset — creates "dual scan" feel */
+    .bg-scanline-2 {
+        animation-delay: 8s;
+        background: linear-gradient(90deg,
+            transparent 0%, rgba(16,185,100,0.03) 15%,
+            rgba(16,185,100,0.07) 50%,
+            rgba(16,185,100,0.03) 85%, transparent 100%);
+    }
+    @keyframes scanlineSweep {
+        0%   { transform: translateY(0); opacity: 0; }
+        4%   { opacity: 0.9; }
+        96%  { opacity: 0.45; }
+        100% { transform: translateY(100vh); opacity: 0; }
+    }
+
+    /* ---------- HUD LABELS ---------- */
+    .hud {
+        position: absolute;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.61rem; font-weight: 700;
+        letter-spacing: 1.1px; white-space: nowrap;
+        opacity: 0;
+        animation: hudHeartbeat 12s ease-in-out infinite;
+    }
+    .hud::before { content: '▸ '; font-size: 0.48rem; }
+    @keyframes hudHeartbeat {
+        0%,100%       { opacity: 0; }
+        10%,40%       { opacity: 1; }
+        45%           { opacity: 0.5; }
+        50%,80%       { opacity: 1; }
+        88%           { opacity: 0.6; }
+    }
+    /* Left HUD */
+    .hud-l1 { top:  7%; left: 3%; color: rgba(0,200,235,0.22);   animation-delay: 0s;    }
+    .hud-l2 { top: 12%; left: 3%; color: rgba(16,185,129,0.2);   animation-delay: 1.8s;  }
+    .hud-l3 { top: 17%; left: 3%; color: rgba(0,200,235,0.18);   animation-delay: 3.6s;  }
+    .hud-l4 { top: 22%; left: 3%; color: rgba(0,200,235,0.17);   animation-delay: 0.9s;  }
+    .hud-l5 { top: 68%; left: 3%; color: rgba(245,158,11,0.18);  animation-delay: 2.7s;  }
+    .hud-l6 { top: 74%; left: 3%; color: rgba(239,68,68,0.18);   animation-delay: 4.5s;  }
+    .hud-l7 { top: 80%; left: 3%; color: rgba(0,200,235,0.17);   animation-delay: 1.3s;  }
+    /* Right HUD */
+    .hud-r1 { top:  7%; right: 3%; color: rgba(0,200,235,0.22);  animation-delay: 0.6s;  text-align:right; }
+    .hud-r2 { top: 12%; right: 3%; color: rgba(16,185,129,0.2);  animation-delay: 2.4s;  text-align:right; }
+    .hud-r3 { top: 17%; right: 3%; color: rgba(0,200,235,0.17);  animation-delay: 4.2s;  text-align:right; }
+    .hud-r4 { top: 22%; right: 3%; color: rgba(0,200,235,0.18);  animation-delay: 1.5s;  text-align:right; }
+    .hud-r5 { top: 68%; right: 3%; color: rgba(245,158,11,0.18); animation-delay: 3.3s;  text-align:right; }
+    .hud-r6 { top: 74%; right: 3%; color: rgba(239,68,68,0.18);  animation-delay: 0.3s;  text-align:right; }
+    .hud-r7 { top: 80%; right: 3%; color: rgba(0,200,235,0.17);  animation-delay: 4.8s;  text-align:right; }
+    .hud-r1::before,.hud-r2::before,.hud-r3::before,
+    .hud-r4::before,.hud-r5::before,.hud-r6::before,.hud-r7::before { content: ''; }
+    .hud-r1::after,.hud-r2::after,.hud-r3::after,
+    .hud-r4::after,.hud-r5::after,.hud-r6::after,.hud-r7::after { content: ' ◂'; font-size: 0.48rem; }
+
+    /* ---------- GATE STATUS INDICATORS ---------- */
+    .gate-indicator {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.58rem; font-weight: 700;
+        letter-spacing: 1px; white-space: nowrap;
+        color: rgba(16,185,129,0.25);
+        animation: gateHeartbeat 8s ease-in-out infinite;
+    }
+    .gate-dot {
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background: rgba(16,185,129,0.65);
+        box-shadow: 0 0 5px rgba(16,185,129,0.3);
+        animation: gateDotPulse 2.5s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+    .gate-entry { bottom: 38%; left: 3%;   animation-delay: 0s;   }
+    .gate-exit  { bottom: 38%; right: 3%;  animation-delay: 1.4s; }
+    @keyframes gateHeartbeat {
+        0%,100% { opacity: 0; }
+        12%,88% { opacity: 1; }
+    }
+    @keyframes gateDotPulse {
+        0%,100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ---------- ZONE LABELS ---------- */
+    .zone-bg {
+        position: absolute;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 800; letter-spacing: 10px;
+        user-select: none; pointer-events: none; white-space: nowrap;
+        color: rgba(0,200,235,0.016);
+        animation: zonePulse 20s ease-in-out infinite alternate;
+    }
+    .zone-bg-a { font-size: 6rem; top: 8%;     left: 1%; animation-delay: 0s; }
+    .zone-bg-b { font-size: 6rem; bottom: 10%; right: 1%; animation-delay: 5s; }
+    @keyframes zonePulse {
+        from { opacity: 0.6; }
+        to   { opacity: 1; }
+    }
+
+    /* ---------- CORNER BRACKETS ---------- */
+    .cbracket {
+        position: absolute;
+        width: 30px; height: 30px;
+        opacity: 0;
+        animation: bracketFadeIn 1.2s ease forwards;
+    }
+    .cbracket::before,.cbracket::after {
+        content: ''; position: absolute;
+        background: rgba(0,200,235,0.7);
+    }
+    .cbracket::before { width: 2px; height: 100%; }
+    .cbracket::after  { width: 100%; height: 2px; }
+    .cb-tl { top: 18px; left: 18px; animation-delay: 0.3s; }
+    .cb-tl::before { top:0;left:0; } .cb-tl::after { top:0;left:0; }
+    .cb-tr { top: 18px; right: 18px; animation-delay: 0.5s; }
+    .cb-tr::before { top:0;right:0;left:auto; } .cb-tr::after { top:0;right:0;left:auto; }
+    .cb-bl { bottom: 18px; left: 18px; animation-delay: 0.7s; }
+    .cb-bl::before { bottom:0;top:auto;left:0; } .cb-bl::after { bottom:0;top:auto;left:0; }
+    .cb-br { bottom: 18px; right: 18px; animation-delay: 0.9s; }
+    .cb-br::before { bottom:0;top:auto;right:0;left:auto; } .cb-br::after { bottom:0;top:auto;right:0;left:auto; }
+    @keyframes bracketFadeIn {
+        from { opacity: 0; } to { opacity: 0.22; }
+    }
+
+    /* ---------- SIDE ACCENT LINES ---------- */
+    .side-line {
+        position: absolute;
+        width: 1px; top: 8%; bottom: 8%;
+        background: linear-gradient(to bottom,
+            transparent 0%,
+            rgba(0,200,235,0.06) 25%,
+            rgba(0,200,235,0.12) 50%,
+            rgba(0,200,235,0.06) 75%,
+            transparent 100%);
+        animation: sideLinePulse 10s ease-in-out infinite alternate;
+    }
+    .side-line-l { left: 11%; animation-delay: 0s; }
+    .side-line-r { right: 11%; animation-delay: 3s; }
+    @keyframes sideLinePulse {
+        from { opacity: 0.3; } to { opacity: 0.9; }
+    }
+
+    /* ---------- TOP STATUS BAR ---------- */
+    .bg-topbar {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 26px;
+        border-bottom: 1px solid rgba(0,200,235,0.05);
+        display: flex; align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.58rem; font-weight: 700;
+        letter-spacing: 1px;
+        color: rgba(0,200,235,0.15);
+        overflow: hidden;
+    }
+    .topbar-item { white-space: nowrap; }
+    .topbar-sep  { width:1px; height:12px; background:rgba(0,200,235,0.1); flex-shrink:0; }
+    .topbar-dot  {
+        width:5px; height:5px; border-radius:50%;
+        background: rgba(16,185,129,0.65);
+        box-shadow: 0 0 5px rgba(16,185,129,0.3);
+        animation: gateDotPulse 2.2s ease-in-out infinite;
+        flex-shrink:0;
+    }
+
+    /* ---------- ROUTE SVG ---------- */
+    .bg-route-svg {
+        position: absolute;
+        inset: 0; width: 100%; height: 100%;
+    }
+    .route-line {
+        fill: none;
+        stroke: rgba(0,200,235,0.07);
+        stroke-width: 1;
+        stroke-dasharray: 4 8;
+    }
+    .route-travel { fill: rgba(0,200,235,0.7); filter: drop-shadow(0 0 2px rgba(0,200,235,0.5)); }
+
+    /* ---------- EV CAR ---------- */
+    .bg-car-track {
+        position: absolute;
+        width: 100%;
+        bottom: calc(22% + 2px);
+        height: 52px;
+        overflow: visible;
+    }
+    .bg-car {
+        position: absolute;
+        bottom: 0;
+        left: -220px;
+        opacity: 0;
+        will-change: transform, opacity;
+        animation: carDrive 20s cubic-bezier(0.25, 0.1, 0.25, 1) 1s infinite;
+    }
+    /* Undercar subtle reflection */
+    .bg-car::after {
+        content: '';
+        position: absolute;
+        bottom: -6px; left: 15px; right: 15px;
+        height: 6px;
+        background: linear-gradient(to bottom, rgba(0,200,235,0.1), transparent);
+        border-radius: 50%;
+        filter: blur(3px);
+    }
+    @keyframes carDrive {
+        0%   { transform: translateX(0);                     opacity: 0; }
+        5%   { opacity: 0.48; }
+        38%  { opacity: 0.48; }
+        46%  { opacity: 0.22; } /* behind card */
+        54%  { opacity: 0.48; }
+        90%  { opacity: 0.42; }
+        98%  { opacity: 0; transform: translateX(calc(100vw + 260px)); }
+        100% { transform: translateX(calc(100vw + 260px)); opacity: 0; }
+    }
+
+    /* ---------- BOTTOM INFO TICKER ---------- */
+    .bg-infobar {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 24px;
+        border-top: 1px solid rgba(0,200,235,0.05);
+        overflow: hidden;
+        display: flex; align-items: center;
+    }
+    .infobar-track {
+        display: flex;
+        gap: 48px;
+        white-space: nowrap;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.57rem; font-weight: 700;
+        letter-spacing: 1px;
+        color: rgba(0,200,235,0.13);
+        animation: tickerScroll 40s linear infinite;
+    }
+    .infobar-track span { flex-shrink: 0; }
+    @keyframes tickerScroll {
+        from { transform: translateX(0); }
+        to   { transform: translateX(-50%); }
+    }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 768px) {
+        .hud { display: none; }
+        .zone-bg { font-size: 3.5rem; }
+        .bg-slot { width: 42px; height: 72px; }
+        .bg-slots-floor { gap: 6px; }
+        .side-line { display: none; }
+        .bg-topbar { display: none; }
+        .gate-indicator { display: none; }
+        .data-vsignal { display: none; }
+    }
+    @media (max-width: 480px) {
+        .zone-bg { display: none; }
+        .bg-car  { display: none; }
+        .data-dot { display: none; }
+        .lane-sweep { display: none; }
+        .bg-infobar { display: none; }
+    }
+    </style>
 </head>
 
 <body class="dark-theme">
-    <div class="login-container led-box">
-        <h1 class="led-text">TERMINAL LOGIN</h1>
-        {% if error %}
-        <div class="error-msg" style="margin-bottom: 20px;">{{ error }}</div>
-        {% endif %}
-        <form method="POST" action="/admin">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit" class="led-btn blue"
-                style="border-color: var(--led-blue); color: var(--led-blue);">ACCESS TERMINAL</button>
-        </form>
-    </div>
-</body>
 
+<!-- ============================================================
+     BACKGROUND SCENE — z-index 0, pointer-events none
+     All animations run autonomously. Zero mouse tracking.
+     ============================================================ -->
+<div class="bg-scene" aria-hidden="true">
+
+    <!-- Atmospheric depth orbs (slow breathing light blobs) -->
+    <div class="bg-orb orb-l"></div>
+    <div class="bg-orb orb-r"></div>
+    <div class="bg-orb orb-t"></div>
+    <div class="bg-orb orb-floor"></div>
+
+    <!-- Technical grids -->
+    <div class="bg-grid"></div>
+    <div class="bg-grid-coarse"></div>
+
+    <!-- Top status bar -->
+    <div class="bg-topbar">
+        <div class="topbar-item">SMART PARKING CONTROL CENTER</div>
+        <div class="topbar-sep"></div>
+        <div class="topbar-item">SECTOR: ALPHA-01</div>
+        <div class="topbar-sep"></div>
+        <div class="topbar-item">CAPACITY: 100 SLOTS</div>
+        <div class="topbar-sep"></div>
+        <div class="topbar-dot"></div>
+        <div class="topbar-item">ONLINE</div>
+    </div>
+
+    <!-- Zone label watermarks -->
+    <div class="zone-bg zone-bg-a">ZONE&nbsp;A</div>
+    <div class="zone-bg zone-bg-b">ZONE&nbsp;B</div>
+
+    <!-- Side accent lines -->
+    <div class="side-line side-line-l"></div>
+    <div class="side-line side-line-r"></div>
+
+    <!-- Corner brackets -->
+    <div class="cbracket cb-tl"></div>
+    <div class="cbracket cb-tr"></div>
+    <div class="cbracket cb-bl"></div>
+    <div class="cbracket cb-br"></div>
+
+    <!-- LEFT HUD labels -->
+    <div class="hud hud-l1">PARKING AREA A</div>
+    <div class="hud hud-l2">SYSTEM ONLINE</div>
+    <div class="hud hud-l3">ENTRY GATE — OPEN</div>
+    <div class="hud hud-l4">SENSOR 024 — ACTIVE</div>
+    <div class="hud hud-l5">ZONE B — 12 RESERVED</div>
+    <div class="hud hud-l6">SLOT S072 — OCCUPIED</div>
+    <div class="hud hud-l7">EV CHARGING — BAY 3</div>
+
+    <!-- RIGHT HUD labels -->
+    <div class="hud hud-r1">CONTROL CENTER</div>
+    <div class="hud hud-r2">74 AVAILABLE</div>
+    <div class="hud hud-r3">SENSOR 081 — ACTIVE</div>
+    <div class="hud hud-r4">EXIT GATE — OPEN</div>
+    <div class="hud hud-r5">SLOT S024 — RESERVED</div>
+    <div class="hud hud-r6">SLOT S100 — OCCUPIED</div>
+    <div class="hud hud-r7">PARKING AREA B</div>
+
+    <!-- Gate status indicators -->
+    <div class="gate-indicator gate-entry">
+        <div class="gate-dot"></div>
+        ENTRY GATE — READY
+    </div>
+    <div class="gate-indicator gate-exit" style="flex-direction:row-reverse;">
+        READY — EXIT GATE
+        <div class="gate-dot" style="animation-delay:0.7s;"></div>
+    </div>
+
+    <!-- Horizon & road -->
+    <div class="bg-horizon"></div>
+    <div class="bg-road-primary"></div>
+    <div class="bg-road-secondary"></div>
+    <div class="bg-road-dashes" id="roadDashes"></div>
+
+    <!-- Lane energy sweeps -->
+    <div class="lane-sweep"></div>
+    <div class="lane-sweep lane-sweep-2"></div>
+
+    <!-- Parking slots -->
+    <div class="bg-slots-floor" id="bgSlotsRow"></div>
+
+    <!-- Sensor nodes (JS-injected for exact placement & stagger) -->
+    <div id="sensorLayer"></div>
+
+    <!-- Data dots with comet tails -->
+    <div class="data-dot" style="background:rgba(0,210,245,0.7);animation-delay:0s;animation-duration:10s;"></div>
+    <div class="data-dot" style="background:rgba(16,185,129,0.65);animation-delay:3.2s;animation-duration:11s;bottom:calc(22%+9px);"></div>
+    <div class="data-dot" style="background:rgba(0,210,245,0.6);animation-delay:6.5s;animation-duration:9.5s;"></div>
+    <div class="data-dot" style="background:rgba(245,158,11,0.55);animation-delay:8.8s;animation-duration:12s;bottom:calc(22%-3px);"></div>
+
+    <!-- Vertical data signals -->
+    <div class="data-vsignal" style="left:13%;height:85px;animation-delay:0s;animation-duration:7s;"></div>
+    <div class="data-vsignal" style="left:27%;height:65px;animation-delay:2.8s;animation-duration:6.5s;"></div>
+    <div class="data-vsignal" style="left:73%;height:95px;animation-delay:1.4s;animation-duration:8.2s;background:linear-gradient(to bottom,transparent,rgba(16,185,129,0.5),transparent);"></div>
+    <div class="data-vsignal" style="left:87%;height:75px;animation-delay:4.2s;animation-duration:7s;"></div>
+
+    <!-- Dual scanlines -->
+    <div class="bg-scanline"></div>
+    <div class="bg-scanline bg-scanline-2"></div>
+
+    <!-- Route SVG paths with traveling dots -->
+    <svg class="bg-route-svg" xmlns="http://www.w3.org/2000/svg" id="routeSvg">
+        <path id="rp1" class="route-line" d=""/>
+        <circle class="route-travel" r="2.5" opacity="0">
+            <animateMotion dur="7s" repeatCount="indefinite" begin="1.5s"><mpath href="#rp1"/></animateMotion>
+            <animate attributeName="opacity" values="0;0.8;0.8;0" keyTimes="0;0.04;0.92;1" dur="7s" repeatCount="indefinite" begin="1.5s"/>
+        </circle>
+        <path id="rp2" class="route-line" d=""/>
+        <circle class="route-travel" r="2.5" opacity="0">
+            <animateMotion dur="8.5s" repeatCount="indefinite" begin="4.2s"><mpath href="#rp2"/></animateMotion>
+            <animate attributeName="opacity" values="0;0.7;0.7;0" keyTimes="0;0.04;0.92;1" dur="8.5s" repeatCount="indefinite" begin="4.2s"/>
+        </circle>
+        <path id="rp3" class="route-line" d="" style="stroke:rgba(16,185,129,0.07)"/>
+        <circle r="2" opacity="0" fill="rgba(16,185,129,0.75)" filter="url(#greenGlow)">
+            <animateMotion dur="6s" repeatCount="indefinite" begin="2.5s"><mpath href="#rp3"/></animateMotion>
+            <animate attributeName="opacity" values="0;0.65;0.65;0" keyTimes="0;0.05;0.9;1" dur="6s" repeatCount="indefinite" begin="2.5s"/>
+        </circle>
+        <defs>
+            <filter id="greenGlow">
+                <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="rgba(16,185,129,0.6)"/>
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- EV Car (with undercar reflection via ::after) -->
+    <div class="bg-car-track">
+        <div class="bg-car" id="bgCar">
+            <svg width="214" height="52" viewBox="0 0 214 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Shadow / ground reflection -->
+                <ellipse cx="107" cy="50" rx="88" ry="4" fill="rgba(0,200,235,0.05)"/>
+                <!-- Car body -->
+                <path d="M 19 40 L 19 29 Q 19 23, 26 23 L 46 23 L 68 12 L 146 12 L 163 23 L 194 23 Q 201 23, 201 29 L 201 40 Z"
+                      fill="rgba(7,12,24,0.94)" stroke="rgba(0,195,225,0.62)" stroke-width="1.4"/>
+                <!-- Windshield area -->
+                <path d="M 70 23 L 83 13 L 141 13 L 161 23"
+                      fill="rgba(0,165,205,0.07)" stroke="rgba(0,195,225,0.30)" stroke-width="0.9"/>
+                <!-- Rear quarter glass -->
+                <path d="M 70 23 L 81 13" stroke="rgba(0,195,225,0.20)" stroke-width="0.8"/>
+                <!-- Roof trim line -->
+                <line x1="83" y1="13" x2="141" y2="13" stroke="rgba(0,195,225,0.18)" stroke-width="0.6"/>
+                <!-- Front wheel -->
+                <circle cx="54"  cy="40" r="11" fill="rgba(7,12,24,0.96)" stroke="rgba(0,195,225,0.52)" stroke-width="1.4"/>
+                <circle cx="54"  cy="40" r="5.5" fill="rgba(0,195,225,0.09)" stroke="rgba(0,195,225,0.36)" stroke-width="1"/>
+                <circle cx="54"  cy="40" r="1.8" fill="rgba(0,195,225,0.45)"/>
+                <!-- Rear wheel -->
+                <circle cx="165" cy="40" r="11" fill="rgba(7,12,24,0.96)" stroke="rgba(0,195,225,0.52)" stroke-width="1.4"/>
+                <circle cx="165" cy="40" r="5.5" fill="rgba(0,195,225,0.09)" stroke="rgba(0,195,225,0.36)" stroke-width="1"/>
+                <circle cx="165" cy="40" r="1.8" fill="rgba(0,195,225,0.45)"/>
+                <!-- Headlight DRL top -->
+                <rect x="194" y="26" width="8" height="2.5" rx="1" fill="rgba(0,242,254,0.78)"/>
+                <!-- Headlight DRL bottom -->
+                <rect x="194" y="30.5" width="6" height="2"   rx="1" fill="rgba(0,242,254,0.52)"/>
+                <!-- Headlight beam cone -->
+                <ellipse cx="208" cy="29" rx="11" ry="5" fill="rgba(0,242,254,0.05)"/>
+                <!-- Tail light upper -->
+                <rect x="12" y="26" width="6" height="2.5" rx="1" fill="rgba(239,68,68,0.60)"/>
+                <!-- Tail light lower -->
+                <rect x="12" y="30.5" width="5" height="2"   rx="1" fill="rgba(239,68,68,0.38)"/>
+                <!-- Door line -->
+                <line x1="108" y1="23" x2="108" y2="39" stroke="rgba(0,195,225,0.14)" stroke-width="0.8"/>
+                <!-- EV charge port -->
+                <rect x="151" y="27" width="4" height="6" rx="1" fill="rgba(16,185,129,0.38)" stroke="rgba(16,185,129,0.55)" stroke-width="0.5"/>
+                <!-- Antenna -->
+                <line x1="111" y1="12" x2="111" y2="7" stroke="rgba(0,195,225,0.38)" stroke-width="1"/>
+                <circle cx="111" cy="6.2" r="1.6" fill="rgba(0,195,225,0.60)"/>
+                <!-- Subtle body highlight stripe -->
+                <line x1="30" y1="27" x2="192" y2="27" stroke="rgba(0,195,225,0.06)" stroke-width="1"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Bottom info ticker -->
+    <div class="bg-infobar">
+        <div class="infobar-track" id="infoTicker">
+            <span>▸ SMART PARKING OS v1.0</span>
+            <span>▸ SECTOR ALPHA-01</span>
+            <span>▸ 100 SLOTS ACTIVE</span>
+            <span>▸ SENSORS ONLINE</span>
+            <span>▸ CONTROL CENTER READY</span>
+            <span>▸ EV CHARGING BAYS: 3</span>
+            <span>▸ ENTRY GATE: OPEN</span>
+            <span>▸ EXIT GATE: OPEN</span>
+            <!-- duplicated for seamless loop -->
+            <span>▸ SMART PARKING OS v1.0</span>
+            <span>▸ SECTOR ALPHA-01</span>
+            <span>▸ 100 SLOTS ACTIVE</span>
+            <span>▸ SENSORS ONLINE</span>
+            <span>▸ CONTROL CENTER READY</span>
+            <span>▸ EV CHARGING BAYS: 3</span>
+            <span>▸ ENTRY GATE: OPEN</span>
+            <span>▸ EXIT GATE: OPEN</span>
+        </div>
+    </div>
+
+</div>
+<!-- END BACKGROUND SCENE -->
+
+<!-- ============================================================
+     LOGIN CARD — COMPLETELY UNCHANGED
+     ============================================================ -->
+<div class="login-page-wrapper" id="loginWrapper">
+    <div class="login-card-panel">
+
+        <!-- Panel ambient elements (scan line + accent bar + 4 corner brackets) -->
+        <div class="panel-scan"></div>
+        <div class="panel-top-line"></div>
+        <div class="corner-tr"></div>
+        <div class="corner-bl"></div>
+
+        <!-- All content sits above the scan layer -->
+        <div class="panel-content">
+
+            <!-- Brand + heading -->
+            <div class="login-brand-header stagger-1">
+                <div class="brand-label">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="4"></rect>
+                        <circle cx="12" cy="12" r="4"></circle>
+                    </svg>
+                    SMART PARKING
+                </div>
+                <h1 class="main-title">CONTROL CENTER</h1>
+                <p class="subtitle">Secure access to your parking operations dashboard.</p>
+                <div class="terminal-id">TERMINAL<span class="tid-sep">//</span>CTRL-01<span class="tid-sep">·</span>NODE&nbsp;ALPHA-01</div>
+            </div>
+
+            <!-- Thin cyan divider below heading -->
+            <div class="brand-divider stagger-2"></div>
+
+            {% if error %}
+            <div class="error-msg" style="margin-bottom: 16px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/admin" id="loginForm">
+
+                <div class="form-group stagger-3">
+                    <label class="form-label" for="username">USERNAME</label>
+                    <div class="input-icon-group">
+                        <input type="text" id="username" name="username" placeholder="Enter your username" required autocomplete="off" autofocus>
+                        <div class="input-left-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group stagger-4">
+                    <label class="form-label" for="password">PASSWORD</label>
+                    <div class="input-icon-group">
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        <div class="input-left-icon">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                        <button type="button" class="toggle-password-btn" id="togglePasswordBtn" title="Toggle Password Visibility" aria-label="Toggle password visibility">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="login-btn-primary stagger-5">
+                    <span>ACCESS CONTROL CENTER</span>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+
+                <!-- Status strip below button -->
+                <div class="secure-connection-badge stagger-6">
+                    <div class="status-chip s-green">
+                        <span class="chip-dot"></span>
+                        ENCRYPTED CONNECTION
+                    </div>
+                    <div class="status-chip s-cyan">
+                        <span class="chip-dot"></span>
+                        ADMIN ACCESS
+                    </div>
+                </div>
+
+            </form>
+
+            <!-- Footer strip -->
+            <div class="login-footer-info stagger-7">
+                <span>SMART PARKING SYSTEM</span>
+                <span>SECURE TERMINAL &nbsp;·&nbsp; v1.0</span>
+            </div>
+
+        </div><!-- /panel-content -->
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const isMobile = W < 480;
+    const isTablet = W < 768;
+
+    /* ---- Road Dashes ---- */
+    const dc = document.getElementById('roadDashes');
+    if (dc) {
+        const n = Math.ceil(W / 54) + 2;
+        for (let i = 0; i < n; i++) {
+            const d = document.createElement('div');
+            d.className = 'road-dash';
+            dc.appendChild(d);
+        }
+    }
+
+    /* ---- Parking Slots ---- */
+    const slotData = [
+        {id:'S01',st:'oc'}, {id:'S02',st:'oc'}, {id:'S03',st:'rs'},
+        {id:'S04',st:'av'}, {id:'S05',st:'av'}, {id:'S06',st:'av'},
+        {id:'S07',st:'rs'}, {id:'S08',st:'av'}, {id:'S09',st:'av'},
+        {id:'S10',st:'oc'},
+    ];
+    const slotsRow = document.getElementById('bgSlotsRow');
+    if (slotsRow && !isMobile) {
+        const max = isTablet ? 6 : 10;
+        slotData.slice(0, max).forEach((s, idx) => {
+            const el = document.createElement('div');
+            el.className = `bg-slot ${s.st}`;
+            /* stagger the glow animation delay per slot */
+            const glowDelay = (idx * 0.9).toFixed(1) + 's';
+            el.style.animationDelay = `${(0.3 + idx * 0.18).toFixed(2)}s, ${glowDelay}`;
+            el.innerHTML = `<div class="s-pip"></div><div class="s-id">${s.id}</div>`;
+            slotsRow.appendChild(el);
+        });
+    }
+
+    /* ---- Sensor Nodes (richer, fully staggered) ---- */
+    const sl = document.getElementById('sensorLayer');
+    const sensors = [
+        { x:'7%',  y:'36%', r:'0,200,235',   cDly:0,   rDur:3.8, bDly:0    },
+        { x:'15%', y:'32%', r:'16,185,129',  cDly:1.3, rDur:4.2, bDly:0.8  },
+        { x:'23%', y:'41%', r:'245,158,11',  cDly:0.6, rDur:3.6, bDly:0.3  },
+        { x:'77%', y:'35%', r:'0,200,235',   cDly:2.1, rDur:3.4, bDly:1.5  },
+        { x:'85%', y:'31%', r:'239,68,68',   cDly:0.9, rDur:4.4, bDly:0.6  },
+        { x:'92%', y:'39%', r:'16,185,129',  cDly:1.7, rDur:3.9, bDly:1.1  },
+        { x:'10%', y:'64%', r:'0,200,235',   cDly:3.2, rDur:5.2, bDly:2.0  },
+        { x:'89%', y:'66%', r:'245,158,11',  cDly:2.0, rDur:4.7, bDly:1.4  },
+    ];
+    if (sl && !isMobile) {
+        const nodeCount = isTablet ? 4 : sensors.length;
+        sensors.slice(0, nodeCount).forEach(s => {
+            const g = document.createElement('div');
+            g.className = 'snode';
+            g.style.cssText = `left:${s.x};top:${s.y};`;
+
+            /* core with per-sensor breath delay */
+            const core = document.createElement('div');
+            core.className = 'snode-core';
+            core.style.cssText = `
+                width:5px;height:5px;
+                background:rgba(${s.r},0.65);
+                box-shadow:0 0 7px rgba(${s.r},0.38);
+                animation-delay:${s.bDly}s;
+                animation-duration:${(s.rDur * 0.9).toFixed(1)}s;`;
+
+            /* 3 expanding rings with independent delays */
+            [20, 36, 52].forEach((sz, i) => {
+                const ring = document.createElement('div');
+                ring.className = 'snode-ring';
+                ring.style.cssText = `
+                    width:${sz}px;height:${sz}px;
+                    border-color:rgba(${s.r},0.26);
+                    animation-delay:${(s.cDly + i * 0.75).toFixed(2)}s;
+                    animation-duration:${s.rDur}s;`;
+                g.appendChild(ring);
+            });
+            g.appendChild(core);
+            sl.appendChild(g);
+        });
+    }
+
+    /* ---- Route Paths ---- */
+    const roadY = H * 0.78;
+    const topY  = H * 0.22;
+    const rp1 = document.getElementById('rp1');
+    const rp2 = document.getElementById('rp2');
+    const rp3 = document.getElementById('rp3');
+    if (rp1) rp1.setAttribute('d', `M 80,${roadY} L ${W*0.16},${roadY} L ${W*0.16},${topY}`);
+    if (rp2) rp2.setAttribute('d', `M ${W*0.84},${roadY} L ${W*0.84},${topY}`);
+    if (rp3) rp3.setAttribute('d', `M ${W*0.09},${H*0.5} Q ${W*0.28},${H*0.62} ${W*0.5},${H*0.7}`);
+
+    /* ---- Password Toggle ---- */
+    const pwd = document.getElementById('password');
+    const tb  = document.getElementById('togglePasswordBtn');
+    if (tb && pwd) {
+        tb.addEventListener('click', () => {
+            const isPass = pwd.getAttribute('type') === 'password';
+            pwd.setAttribute('type', isPass ? 'text' : 'password');
+            tb.innerHTML = isPass
+                ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`
+                : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+        });
+    }
+
+    /* ---- Submit Feedback ---- */
+    const lf  = document.getElementById('loginForm');
+    const sb  = document.getElementById('submitBtn');
+    if (lf && sb) {
+        lf.addEventListener('submit', () => {
+            sb.innerHTML = `<span>AUTHENTICATING...</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line></svg>`;
+            sb.style.opacity = '0.8';
+        });
+    }
+});
+</script>
+</body>
 </html>

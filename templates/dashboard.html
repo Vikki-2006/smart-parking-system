@@ -4,67 +4,1114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="30">
-    <title>Dashboard - Smart Parking</title>
+    <title>Smart Parking - Operations Control Center</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body class="dark-theme">
-    <header class="dashboard-header">
-        <h1 class="led-text">TERMINAL CONTROL</h1>
-        <a href="/logout" class="led-btn sm">LOGOUT</a>
-    </header>
+<body class="dark-theme dashboard-body">
+    <!-- Ambient Control Room Background Texture -->
+    <div class="dash-bg-grid" aria-hidden="true"></div>
+    <div class="dash-bg-glow" aria-hidden="true"></div>
+    <div class="dash-bg-scanline" aria-hidden="true"></div>
 
-    <div class="stats-panel led-box">
-        <div class="stat">TOTAL <span>{{ total }}</span></div>
-        <div class="stat green-text">VACANT <span>{{ vacant }}</span></div>
-        <div class="stat yellow-text">RESERVED <span>{{ reserved }}</span></div>
-        <div class="stat red-text">OCCUPIED <span>{{ occupied }}</span></div>
-    </div>
-
-    <div class="main-content">
-        <div class="left-panel">
-            <div class="control-panel led-box">
-                <h2>VEHICLE ENTRY</h2>
-                <form action="/entry" method="POST">
-                    <input type="text" name="car_number" placeholder="Car Number (e.g. TN-45-XX-1234)" required {% if
-                        vacant==0 %}disabled{% endif %}>
-                    <input type="text" name="phone_number" placeholder="Phone Number" required {% if vacant==0
-                        %}disabled{% endif %}>
-                    {% if vacant > 0 %}
-                    <button type="submit" class="led-btn green">ALLOCATE SLOT</button>
-                    {% else %}
-                    <button type="button" class="led-btn red" disabled>PARKING FULL</button>
-                    {% endif %}
-                </form>
-            </div>
-
-            <div class="control-panel led-box" style="margin-top: 20px;">
-                <h2>VEHICLE EXIT</h2>
-                {% if error %}
-                <div class="error-msg" style="margin-bottom: 10px;">{{ error }}</div>
-                {% endif %}
-                <form action="/exit_search" method="POST">
-                    <input type="text" name="car_number" placeholder="Enter Car Number to Exit" required>
-                    <button type="submit" class="led-btn yellow">PROCESS EXIT</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="right-panel led-box">
-            <h2>PARKING GRID</h2>
-            <div class="parking-grid">
-                {% for slot in slots %}
-                <div class="slot {{ slot.status }}">
-                    <div class="slot-id">{{ slot.id }}</div>
-                    {% if slot.car_number %}
-                    <div class="car-num">{{ slot.car_number }}</div>
-                    {% endif %}
+    <div class="dashboard-container">
+        <!-- ============================================================
+             DASHBOARD HEADER
+             ============================================================ -->
+        <header class="dashboard-header animate-header">
+            <div class="header-brand">
+                <div class="brand-eyebrow">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="4"></rect>
+                        <circle cx="12" cy="12" r="4"></circle>
+                    </svg>
+                    SMART PARKING SYSTEM
                 </div>
-                {% endfor %}
+                <h1 class="header-title">CONTROL CENTER</h1>
+            </div>
+
+            <div class="header-actions">
+                <div class="header-status-pill" id="headerStatusPill">
+                    <span class="pulse-dot-green" id="headerStatusDot"></span>
+                    <span class="status-text" id="headerStatusText">SYSTEM ONLINE</span>
+                </div>
+                <div class="header-badge-capacity">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                        <path d="M9 3v18"></path>
+                        <path d="M15 3v18"></path>
+                        <path d="M3 9h18"></path>
+                        <path d="M3 15h18"></path>
+                    </svg>
+                    <span>100 SLOTS ACTIVE</span>
+                </div>
+                <a href="/logout" class="btn-logout" title="Exit Control Center">
+                    <span>LOGOUT</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- ============================================================
+             STATISTICS ROW (4 CARDS)
+             ============================================================ -->
+        <div class="stats-panel animate-stats">
+            <!-- TOTAL -->
+            <div class="stat-card stat-total">
+                <div class="stat-card-header">
+                    <span class="stat-label">TOTAL CAPACITY</span>
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="3"></rect>
+                            <path d="M7 10h10M7 14h10M10 7v10"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value count-up" id="stat-total-val" data-count="{{ total }}">{{ total }}</div>
+                <div class="stat-footer">
+                    <span class="stat-badge">SECTOR ALPHA</span>
+                    <span class="stat-sub">100 Max Units</span>
+                </div>
+            </div>
+
+            <!-- AVAILABLE -->
+            <div class="stat-card stat-available">
+                <div class="stat-card-header">
+                    <span class="stat-label">AVAILABLE</span>
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value count-up" id="stat-vacant-val" data-count="{{ vacant }}">{{ vacant }}</div>
+                <div class="stat-footer">
+                    <span class="stat-badge badge-green">READY TO PARK</span>
+                    <span class="stat-sub" id="stat-vacant-pct">{{ ((vacant / total) * 100)|round|int }}% Vacant</span>
+                </div>
+            </div>
+
+            <!-- RESERVED -->
+            <div class="stat-card stat-reserved">
+                <div class="stat-card-header">
+                    <span class="stat-label">RESERVED</span>
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value count-up" id="stat-reserved-val" data-count="{{ reserved }}">{{ reserved }}</div>
+                <div class="stat-footer">
+                    <span class="stat-badge badge-amber">QR PENDING</span>
+                    <span class="stat-sub">Gate Allocation</span>
+                </div>
+            </div>
+
+            <!-- OCCUPIED -->
+            <div class="stat-card stat-occupied">
+                <div class="stat-card-header">
+                    <span class="stat-label">OCCUPIED</span>
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C2.1 11 2 11.5 2 12v4c0 .6.4 1 1 1h2"></path>
+                            <circle cx="7" cy="17" r="2"></circle>
+                            <circle cx="17" cy="17" r="2"></circle>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value count-up" id="stat-occupied-val" data-count="{{ occupied }}">{{ occupied }}</div>
+                <div class="stat-footer">
+                    <span class="stat-badge badge-red">IN BAY</span>
+                    <span class="stat-sub" id="stat-occupied-pct">{{ ((occupied / total) * 100)|round|int }}% Load</span>
+                </div>
             </div>
         </div>
+
+        <!-- ============================================================
+             MAIN TWO-COLUMN WORKSPACE
+             ============================================================ -->
+        <div class="main-content">
+            <!-- LEFT COLUMN: ENTRY & EXIT CONTROL PANELS -->
+            <aside class="left-panel animate-left">
+                <!-- VEHICLE ENTRY PANEL -->
+                <div class="control-panel-box">
+                    <div class="panel-box-header">
+                        <div class="panel-box-title">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 8 8 12 12 16"></polyline>
+                                <line x1="16" y1="12" x2="8" y2="12"></line>
+                            </svg>
+                            <h2>VEHICLE ENTRY</h2>
+                        </div>
+                        <span class="panel-mode-tag">INGRESS</span>
+                    </div>
+
+                    <form action="/entry" method="POST" class="control-form" id="entryForm">
+                        <div class="form-field">
+                            <label class="form-label" for="car_number_entry">CAR NUMBER (REGISTRATION)</label>
+                            <div class="input-container">
+                                <span class="input-icon">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                                    </svg>
+                                </span>
+                                <input type="text" id="car_number_entry" name="car_number" placeholder="e.g. TN-45-XX-1234" required {% if vacant == 0 %}disabled{% endif %} autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <label class="form-label" for="phone_number_entry">PHONE NUMBER (CONTACT)</label>
+                            <div class="input-container">
+                                <span class="input-icon">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                    </svg>
+                                </span>
+                                <input type="text" id="phone_number_entry" name="phone_number" placeholder="Enter contact number" required {% if vacant == 0 %}disabled{% endif %} autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div id="allocateBtnContainer">
+                            {% if vacant > 0 %}
+                            <button type="submit" class="btn-action btn-allocate" id="allocateBtn">
+                                <span>ALLOCATE SLOT</span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn-action btn-disabled" id="allocateBtn" disabled>
+                                <span>PARKING FULL</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+
+                <!-- VEHICLE EXIT PANEL -->
+                <div class="control-panel-box">
+                    <div class="panel-box-header">
+                        <div class="panel-box-title">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 16 16 12 12 8"></polyline>
+                                <line x1="8" y1="12" x2="16" y2="12"></line>
+                            </svg>
+                            <h2>VEHICLE EXIT</h2>
+                        </div>
+                        <span class="panel-mode-tag tag-amber">EGRESS</span>
+                    </div>
+
+                    {% if error %}
+                    <div class="error-msg" style="margin-bottom: 12px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span>{{ error }}</span>
+                    </div>
+                    {% endif %}
+
+                    <form action="/exit_search" method="POST" class="control-form" id="exitForm">
+                        <div class="form-field">
+                            <label class="form-label" for="car_number_exit">CAR NUMBER TO EXIT</label>
+                            <div class="input-container">
+                                <span class="input-icon">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                                    </svg>
+                                </span>
+                                <input type="text" id="car_number_exit" name="car_number" placeholder="Enter registration to exit" required autocomplete="off">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-action btn-exit">
+                            <span>PROCESS EXIT</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- TERMINAL TELEMETRY WIDGET -->
+                <div class="telemetry-card">
+                    <div class="telemetry-row">
+                        <span class="tele-label">SYSTEM GATEWAY</span>
+                        <span class="tele-val">ONLINE 100/100</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="tele-label">QR RECOGNITION</span>
+                        <span class="tele-val text-green">ARMED</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="tele-label">LIVE SYNC</span>
+                        <span class="tele-val text-green" id="syncStatusVal">LIVE (30s)</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- RIGHT COLUMN: 100-SLOT SENSOR MATRIX -->
+            <main class="right-panel animate-right">
+                <div class="matrix-container">
+                    <!-- MATRIX TOOLBAR & CONTROLS -->
+                    <div class="matrix-toolbar">
+                        <div class="matrix-top-row">
+                            <div class="matrix-title-group">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                    <polyline points="2 17 12 22 22 17"></polyline>
+                                    <polyline points="2 12 12 17 22 12"></polyline>
+                                </svg>
+                                <h2>PARKING SENSOR MATRIX</h2>
+                            </div>
+
+                            <div class="matrix-controls-group">
+                                <!-- Sort Control -->
+                                <div class="matrix-sort-wrap">
+                                    <span class="ctrl-label">SORT BY</span>
+                                    <div class="custom-select-wrap">
+                                        <select id="matrixSortSelect" class="matrix-select" aria-label="Sort parking slots">
+                                            <option value="slot">Slot Number</option>
+                                            <option value="status">Status</option>
+                                            <option value="vehicle">Vehicle Number</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Instant Search Input -->
+                                <div class="matrix-search-wrap">
+                                    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="matrixSearchInput" class="matrix-search-input" placeholder="Search slot or vehicle..." autocomplete="off" spellcheck="false" aria-label="Search slot or vehicle">
+                                    <button type="button" id="matrixSearchClear" class="search-clear-btn" title="Clear search" aria-label="Clear search">&times;</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filter Buttons Bar -->
+                        <div class="matrix-filter-bar" role="group" aria-label="Slot Status Filters">
+                            <button type="button" class="matrix-filter-btn filter-all active" data-filter="all" id="filterBtnAll">
+                                <span class="f-dot dot-cyan"></span>
+                                <span class="f-name">ALL</span>
+                                <span class="f-count" id="filter-count-all">{{ total }}</span>
+                            </button>
+
+                            <button type="button" class="matrix-filter-btn filter-vacant" data-filter="vacant" id="filterBtnVacant">
+                                <span class="f-dot dot-green"></span>
+                                <span class="f-name">AVAILABLE</span>
+                                <span class="f-count" id="filter-count-vacant">{{ vacant }}</span>
+                            </button>
+
+                            <button type="button" class="matrix-filter-btn filter-reserved" data-filter="reserved" id="filterBtnReserved">
+                                <span class="f-dot dot-amber"></span>
+                                <span class="f-name">RESERVED</span>
+                                <span class="f-count" id="filter-count-reserved">{{ reserved }}</span>
+                            </button>
+
+                            <button type="button" class="matrix-filter-btn filter-occupied" data-filter="occupied" id="filterBtnOccupied">
+                                <span class="f-dot dot-red"></span>
+                                <span class="f-name">OCCUPIED</span>
+                                <span class="f-count" id="filter-count-occupied">{{ occupied }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AREA A: S1 to S25 -->
+                    <section class="area-block" aria-label="Parking Area A">
+                        <div class="area-header">
+                            <div class="area-title-wrap">
+                                <span class="area-dot"></span>
+                                <span class="area-title">PARKING AREA A</span>
+                            </div>
+                            <span class="area-range">S1 &mdash; S25</span>
+                        </div>
+                        <div class="parking-grid">
+                            {% for slot in slots[0:25] %}
+                            {% if slot.status == 'reserved' and slot.session_id %}
+                            <div class="slot-tile reserved" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: RESERVED ({{ slot.car_number }}) - Click to view QR Pass">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                                <div class="slot-hover-action">↳ OPEN QR PASS</div>
+                            </div>
+                            {% elif slot.status == 'occupied' %}
+                            <div class="slot-tile occupied" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id or '' }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: OCCUPIED ({{ slot.car_number }}) - Click to view Vehicle Details">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                                <div class="slot-hover-action">↳ VIEW DETAILS</div>
+                            </div>
+                            {% elif slot.car_number %}
+                            <div class="slot-tile {{ slot.status }}" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id or '' }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: {{ slot.status|upper }} ({{ slot.car_number }})">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                            </div>
+                            {% else %}
+                            <div class="slot-tile {{ slot.status }}" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="" data-session-id="" data-entry-time="" title="Slot {{ slot.id }}: AVAILABLE">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-state-label">AVAILABLE</div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <!-- AREA B: S26 to S50 -->
+                    <section class="area-block" aria-label="Parking Area B">
+                        <div class="area-header">
+                            <div class="area-title-wrap">
+                                <span class="area-dot"></span>
+                                <span class="area-title">PARKING AREA B</span>
+                            </div>
+                            <span class="area-range">S26 &mdash; S50</span>
+                        </div>
+                        <div class="parking-grid">
+                            {% for slot in slots[25:50] %}
+                            {% if slot.status == 'reserved' and slot.session_id %}
+                            <div class="slot-tile reserved" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: RESERVED ({{ slot.car_number }}) - Click to view QR Pass">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                                <div class="slot-hover-action">↳ OPEN QR PASS</div>
+                            </div>
+                            {% elif slot.status == 'occupied' %}
+                            <div class="slot-tile occupied" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id or '' }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: OCCUPIED ({{ slot.car_number }}) - Click to view Vehicle Details">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                                <div class="slot-hover-action">↳ VIEW DETAILS</div>
+                            </div>
+                            {% elif slot.car_number %}
+                            <div class="slot-tile {{ slot.status }}" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id or '' }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: {{ slot.status|upper }} ({{ slot.car_number }})">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                            </div>
+                            {% else %}
+                            <div class="slot-tile {{ slot.status }}" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="" data-session-id="" data-entry-time="" title="Slot {{ slot.id }}: AVAILABLE">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-state-label">AVAILABLE</div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <!-- AREA C: S51 to S75 -->
+                    <section class="area-block" aria-label="Parking Area C">
+                        <div class="area-header">
+                            <div class="area-title-wrap">
+                                <span class="area-dot"></span>
+                                <span class="area-title">PARKING AREA C</span>
+                            </div>
+                            <span class="area-range">S51 &mdash; S75</span>
+                        </div>
+                        <div class="parking-grid">
+                            {% for slot in slots[50:75] %}
+                            {% if slot.status == 'reserved' and slot.session_id %}
+                            <div class="slot-tile reserved" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: RESERVED ({{ slot.car_number }}) - Click to view QR Pass">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                                <div class="slot-hover-action">↳ OPEN QR PASS</div>
+                            </div>
+                            {% elif slot.status == 'occupied' %}
+                            <div class="slot-tile occupied" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id or '' }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: OCCUPIED ({{ slot.car_number }}) - Click to view Vehicle Details">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                                <div class="slot-hover-action">↳ VIEW DETAILS</div>
+                            </div>
+                            {% elif slot.car_number %}
+                            <div class="slot-tile {{ slot.status }}" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id or '' }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: {{ slot.status|upper }} ({{ slot.car_number }})">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                            </div>
+                            {% else %}
+                            <div class="slot-tile {{ slot.status }}" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="" data-session-id="" data-entry-time="" title="Slot {{ slot.id }}: AVAILABLE">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-state-label">AVAILABLE</div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <!-- AREA D: S76 to S100 -->
+                    <section class="area-block" aria-label="Parking Area D">
+                        <div class="area-header">
+                            <div class="area-title-wrap">
+                                <span class="area-dot"></span>
+                                <span class="area-title">PARKING AREA D</span>
+                            </div>
+                            <span class="area-range">S76 &mdash; S100</span>
+                        </div>
+                        <div class="parking-grid">
+                            {% for slot in slots[75:100] %}
+                            {% if slot.status == 'reserved' and slot.session_id %}
+                            <div class="slot-tile reserved" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: RESERVED ({{ slot.car_number }}) - Click to view QR Pass">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                                <div class="slot-hover-action">↳ OPEN QR PASS</div>
+                            </div>
+                            {% elif slot.status == 'occupied' %}
+                            <div class="slot-tile occupied" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id or '' }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: OCCUPIED ({{ slot.car_number }}) - Click to view Vehicle Details">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                                <div class="slot-hover-action">↳ VIEW DETAILS</div>
+                            </div>
+                            {% elif slot.car_number %}
+                            <div class="slot-tile {{ slot.status }}" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="{{ slot.car_number or '' }}" data-session-id="{{ slot.session_id or '' }}" data-entry-time="{{ slot.entry_time or '' }}" title="Slot {{ slot.id }}: {{ slot.status|upper }} ({{ slot.car_number }})">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-vehicle-badge" title="{{ slot.car_number }}">{{ slot.car_number }}</div>
+                            </div>
+                            {% else %}
+                            <div class="slot-tile {{ slot.status }}" id="slot-{{ slot.id }}" data-slot-id="{{ slot.id }}" data-status="{{ slot.status }}" data-car="" data-session-id="" data-entry-time="" title="Slot {{ slot.id }}: AVAILABLE">
+                                <div class="slot-tile-header">
+                                    <span class="slot-status-dot"></span>
+                                    <span class="slot-id">{{ slot.id }}</span>
+                                </div>
+                                <div class="slot-state-label">AVAILABLE</div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <!-- Global No-Match State Banner -->
+                    <div id="noSlotsMatchMsg" class="no-slots-match-banner" style="display: none;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                        <span>NO MATCHING SLOTS FOUND FOR CURRENT FILTER / SEARCH</span>
+                    </div>
+
+                    <!-- HUD TOAST NOTIFICATION CONTAINER -->
+                    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+                    <!-- OCCUPIED VEHICLE DETAILS MODAL -->
+                    <div id="occupiedModalOverlay" class="modal-backdrop-overlay" aria-hidden="true">
+                        <div class="modal-details-card" role="dialog" aria-modal="true" aria-labelledby="modalSlotId">
+                            <div class="modal-header-row">
+                                <div class="modal-slot-title-group">
+                                    <h3 class="modal-slot-id" id="modalSlotId">SLOT S29</h3>
+                                    <div class="modal-status-badge">
+                                        <span class="legend-dot dot-occupied"></span>
+                                        <span>OCCUPIED</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="modal-close-btn" id="modalCloseBtn" aria-label="Close modal">&times;</button>
+                            </div>
+
+                            <div class="modal-info-list">
+                                <div class="modal-info-item">
+                                    <span class="modal-info-label">VEHICLE</span>
+                                    <span class="modal-info-val" id="modalCarVal">TN-08-TEST-1234</span>
+                                </div>
+                                <div class="modal-info-item">
+                                    <span class="modal-info-label">ENTRY TIME</span>
+                                    <span class="modal-info-val" id="modalEntryTimeVal">2026-08-15 23:10:54</span>
+                                </div>
+                                <div class="modal-info-item">
+                                    <span class="modal-info-label">PARKING AREA</span>
+                                    <span class="modal-info-val" id="modalAreaVal">AREA B</span>
+                                </div>
+                                <div class="modal-info-item">
+                                    <span class="modal-info-label">STATUS</span>
+                                    <span class="modal-info-val" style="color: #4ade80; display: flex; align-items: center; gap: 6px;">
+                                        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 6px #4ade80;"></span>
+                                        VEHICLE PARKED
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Submit to existing /exit_search POST route with car_number -->
+                            <form method="POST" action="/exit_search" id="modalExitForm">
+                                <input type="hidden" name="car_number" id="modalExitCarInput" value="">
+                                <button type="submit" class="btn-modal-exit">
+                                    <span>PROCESS EXIT</span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        <polyline points="12 5 19 12 12 19"></polyline>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
+
+    <!-- Client-side Count-Up Animation & Seamless Real-Time AJAX Polling & Matrix Filter/Sort & Details Modal -->
+    <script>
+        // State Variables for Matrix Filter, Sort & Search
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let currentSort = 'slot';
+        let currentlyOpenModalSlotId = null;
+
+        // Modal Elements
+        const modalOverlay = document.getElementById('occupiedModalOverlay');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+        function openOccupiedModal(slotId, carNumber, entryTime) {
+            if (!modalOverlay) return;
+            currentlyOpenModalSlotId = slotId;
+
+            const num = parseInt(slotId.replace(/\D/g, ''), 10) || 0;
+            const areaName = num <= 25 ? 'AREA A' : num <= 50 ? 'AREA B' : num <= 75 ? 'AREA C' : 'AREA D';
+
+            const slotIdEl = document.getElementById('modalSlotId');
+            const carValEl = document.getElementById('modalCarVal');
+            const entryTimeValEl = document.getElementById('modalEntryTimeVal');
+            const areaValEl = document.getElementById('modalAreaVal');
+            const exitCarInput = document.getElementById('modalExitCarInput');
+
+            if (slotIdEl) slotIdEl.textContent = `SLOT ${slotId}`;
+            if (carValEl) carValEl.textContent = carNumber || 'N/A';
+            if (entryTimeValEl) entryTimeValEl.textContent = entryTime || 'Active Session';
+            if (areaValEl) areaValEl.textContent = areaName;
+            if (exitCarInput) exitCarInput.value = carNumber || '';
+
+            modalOverlay.classList.add('active');
+            modalOverlay.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeOccupiedModal() {
+            if (!modalOverlay) return;
+            modalOverlay.classList.remove('active');
+            modalOverlay.setAttribute('aria-hidden', 'true');
+            currentlyOpenModalSlotId = null;
+        }
+
+        if (modalCloseBtn) {
+            modalCloseBtn.addEventListener('click', closeOccupiedModal);
+        }
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', function (e) {
+                if (e.target === modalOverlay) {
+                    closeOccupiedModal();
+                }
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && currentlyOpenModalSlotId) {
+                closeOccupiedModal();
+            }
+        });
+
+        // Real-Time PC Confirmation Toast Notification
+        function showEntryConfirmedToast(slotId, carNumber, entryTime) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'hud-toast-notification';
+            toast.innerHTML = `
+                <div class="toast-header-row">
+                    <div class="toast-status-badge">
+                        <span class="toast-check-icon">✓</span>
+                        <span class="toast-title">ENTRY CONFIRMED</span>
+                    </div>
+                    <span class="toast-time">JUST NOW</span>
+                </div>
+                <div class="toast-body-grid">
+                    <div class="toast-data-item">
+                        <span class="toast-label">SLOT</span>
+                        <span class="toast-val val-cyan">${slotId}</span>
+                    </div>
+                    <div class="toast-data-item">
+                        <span class="toast-label">STATUS</span>
+                        <span class="toast-val val-red">● OCCUPIED</span>
+                    </div>
+                    <div class="toast-data-item span-2">
+                        <span class="toast-label">VEHICLE</span>
+                        <span class="toast-val val-white">${carNumber || 'N/A'}</span>
+                    </div>
+                </div>
+                <div class="toast-progress-bar">
+                    <div class="toast-progress-fill"></div>
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            // Smooth slide-in
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            // Auto dismiss after 4.5s
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                }, 350);
+            }, 4500);
+        }
+
+        // Count-up helper
+        function animateValue(el, start, end, duration) {
+            if (start === end) {
+                el.textContent = end;
+                return;
+            }
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = Math.floor(start + (end - start) * easeOut);
+                el.textContent = current;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    el.textContent = end;
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Apply Client-side Matrix Filter, Sort & Search
+        function applyMatrixFilter() {
+            // Update Active Filter Button States
+            const filterBtns = document.querySelectorAll('.matrix-filter-btn');
+            filterBtns.forEach(btn => {
+                if (btn.getAttribute('data-filter') === currentFilter) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Toggle Search Clear Button
+            const searchClear = document.getElementById('matrixSearchClear');
+            if (searchClear) {
+                searchClear.style.display = currentSearch ? 'flex' : 'none';
+            }
+
+            const query = currentSearch.toLowerCase().trim();
+            let totalVisibleAcrossMatrix = 0;
+
+            const areaBlocks = document.querySelectorAll('.area-block');
+            areaBlocks.forEach(area => {
+                const grid = area.querySelector('.parking-grid');
+                if (!grid) return;
+
+                const tiles = Array.from(grid.querySelectorAll('.slot-tile'));
+                let areaVisibleCount = 0;
+
+                // 1. Sort tiles within grid
+                tiles.sort((a, b) => {
+                    const idA = parseInt(a.getAttribute('data-slot-id').replace(/\D/g, ''), 10) || 0;
+                    const idB = parseInt(b.getAttribute('data-slot-id').replace(/\D/g, ''), 10) || 0;
+
+                    if (currentSort === 'slot') {
+                        return idA - idB;
+                    } else if (currentSort === 'status') {
+                        const statusPriority = { 'vacant': 1, 'reserved': 2, 'occupied': 3 };
+                        const stA = a.getAttribute('data-status') || '';
+                        const stB = b.getAttribute('data-status') || '';
+                        const diff = (statusPriority[stA] || 99) - (statusPriority[stB] || 99);
+                        if (diff !== 0) return diff;
+                        return idA - idB;
+                    } else if (currentSort === 'vehicle') {
+                        const carA = (a.getAttribute('data-car') || '').trim().toLowerCase();
+                        const carB = (b.getAttribute('data-car') || '').trim().toLowerCase();
+                        if (carA && !carB) return -1;
+                        if (!carA && carB) return 1;
+                        if (carA && carB) {
+                            const cmp = carA.localeCompare(carB);
+                            if (cmp !== 0) return cmp;
+                        }
+                        return idA - idB;
+                    }
+                    return 0;
+                });
+
+                // Re-append sorted tiles
+                tiles.forEach(t => grid.appendChild(t));
+
+                // 2. Filter tiles
+                tiles.forEach(tile => {
+                    const status = tile.getAttribute('data-status');
+                    const slotId = (tile.getAttribute('data-slot-id') || '').toLowerCase();
+                    const carNumber = (tile.getAttribute('data-car') || '').toLowerCase();
+
+                    const matchesFilter = (currentFilter === 'all') || (status === currentFilter);
+                    const matchesSearch = !query || slotId.includes(query) || carNumber.includes(query);
+
+                    if (matchesFilter && matchesSearch) {
+                        tile.classList.remove('slot-hidden');
+                        areaVisibleCount++;
+                        totalVisibleAcrossMatrix++;
+                    } else {
+                        tile.classList.add('slot-hidden');
+                    }
+                });
+
+                // Hide empty areas cleanly
+                if (areaVisibleCount === 0) {
+                    area.style.display = 'none';
+                } else {
+                    area.style.display = 'block';
+                }
+            });
+
+            // Display No Match banner if entire matrix has no matching slots
+            const noMatchBanner = document.getElementById('noSlotsMatchMsg');
+            if (noMatchBanner) {
+                noMatchBanner.style.display = (totalVisibleAcrossMatrix === 0) ? 'flex' : 'none';
+            }
+        }
+
+        // Initialize Filter & Search Listeners on Page Load
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Initial Telemetry Count-Ups
+            const countElements = document.querySelectorAll('.count-up');
+            countElements.forEach(el => {
+                const target = parseInt(el.getAttribute('data-count'), 10);
+                if (isNaN(target) || target === 0) {
+                    el.textContent = target || 0;
+                    return;
+                }
+                animateValue(el, 0, target, 650);
+            });
+
+            // 2. Filter Buttons Click Event Listeners
+            const filterBtns = document.querySelectorAll('.matrix-filter-btn');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const selected = this.getAttribute('data-filter');
+                    if (selected && selected !== currentFilter) {
+                        currentFilter = selected;
+                        applyMatrixFilter();
+                    }
+                });
+            });
+
+            // 3. Sort Dropdown Change Listener
+            const sortSelect = document.getElementById('matrixSortSelect');
+            if (sortSelect) {
+                sortSelect.addEventListener('change', function () {
+                    currentSort = this.value;
+                    applyMatrixFilter();
+                });
+            }
+
+            // 4. Instant Search Input Listener
+            const searchInput = document.getElementById('matrixSearchInput');
+            const searchClear = document.getElementById('matrixSearchClear');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    currentSearch = this.value;
+                    applyMatrixFilter();
+                });
+            }
+
+            if (searchClear && searchInput) {
+                searchClear.addEventListener('click', function () {
+                    searchInput.value = '';
+                    currentSearch = '';
+                    searchInput.focus();
+                    applyMatrixFilter();
+                });
+            }
+
+            // Initial Filter Run
+            applyMatrixFilter();
+        });
+
+        // Real-Time Seamless Background Sync (Never touches form inputs)
+        async function updateDashboardData() {
+            try {
+                const res = await fetch('/api/dashboard-status', {
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!res.ok) throw new Error('Network response not ok');
+                const data = await res.json();
+
+                // 1. Update Telemetry Totals
+                const totalEl = document.getElementById('stat-total-val');
+                if (totalEl) {
+                    const current = parseInt(totalEl.textContent, 10) || 0;
+                    if (current !== data.total) animateValue(totalEl, current, data.total, 400);
+                }
+
+                const vacantEl = document.getElementById('stat-vacant-val');
+                if (vacantEl) {
+                    const current = parseInt(vacantEl.textContent, 10) || 0;
+                    if (current !== data.vacant) animateValue(vacantEl, current, data.vacant, 400);
+                }
+
+                const reservedEl = document.getElementById('stat-reserved-val');
+                if (reservedEl) {
+                    const current = parseInt(reservedEl.textContent, 10) || 0;
+                    if (current !== data.reserved) animateValue(reservedEl, current, data.reserved, 400);
+                }
+
+                const occupiedEl = document.getElementById('stat-occupied-val');
+                if (occupiedEl) {
+                    const current = parseInt(occupiedEl.textContent, 10) || 0;
+                    if (current !== data.occupied) animateValue(occupiedEl, current, data.occupied, 400);
+                }
+
+                // 2. Update Filter Bar Counts Live
+                const fCountAll = document.getElementById('filter-count-all');
+                if (fCountAll) fCountAll.textContent = data.total;
+
+                const fCountVacant = document.getElementById('filter-count-vacant');
+                if (fCountVacant) fCountVacant.textContent = data.vacant;
+
+                const fCountReserved = document.getElementById('filter-count-reserved');
+                if (fCountReserved) fCountReserved.textContent = data.reserved;
+
+                const fCountOccupied = document.getElementById('filter-count-occupied');
+                if (fCountOccupied) fCountOccupied.textContent = data.occupied;
+
+                // 3. Update Occupancy Percent Bar
+                const percent = data.total > 0 ? Math.round(((data.reserved + data.occupied) / data.total) * 100) : 0;
+                const occPercentEl = document.getElementById('occPercentVal');
+                if (occPercentEl) occPercentEl.textContent = `${percent}%`;
+
+                const occBarFill = document.getElementById('occBarFill');
+                if (occBarFill) occBarFill.style.width = `${percent}%`;
+
+                // 4. Update Header Subtitle
+                const headerSub = document.getElementById('headerSubtitle');
+                if (headerSub) {
+                    headerSub.textContent = `${data.vacant} OF ${data.total} BAYS AVAILABLE &bull; LIVE FACILITY TELEMETRY`;
+                }
+
+                // 5. Handle Full Parking Form State
+                const entryInputs = [
+                    document.getElementById('car_number_entry'),
+                    document.getElementById('phone_number_entry')
+                ];
+                const allocateContainer = document.getElementById('allocateBtnContainer');
+                if (data.vacant === 0) {
+                    entryInputs.forEach(input => { if (input) input.disabled = true; });
+                    if (allocateContainer) {
+                        allocateContainer.innerHTML = `
+                            <button type="button" class="btn-action btn-disabled" id="allocateBtn" disabled>
+                                <span>PARKING FULL</span>
+                            </button>
+                        `;
+                    }
+                } else {
+                    entryInputs.forEach(input => { if (input) input.disabled = false; });
+                    if (allocateContainer && allocateContainer.querySelector('.btn-disabled')) {
+                        allocateContainer.innerHTML = `
+                            <button type="submit" class="btn-action btn-allocate" id="allocateBtn">
+                                <span>ALLOCATE SLOT</span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+                        `;
+                    }
+                }
+
+                // 6. Update Slot Matrix Tiles (Only update changed elements)
+                if (Array.isArray(data.slots)) {
+                    data.slots.forEach(slot => {
+                        const tile = document.getElementById(`slot-${slot.id}`);
+                        if (!tile) return;
+
+                        const currentStatus = tile.getAttribute('data-status');
+                        const currentCar = tile.getAttribute('data-car') || '';
+                        const currentSession = tile.getAttribute('data-session-id') || '';
+                        const currentEntryTime = tile.getAttribute('data-entry-time') || '';
+                        const newCar = slot.car_number || '';
+                        const newSession = slot.session_id || '';
+                        const newEntryTime = slot.entry_time || '';
+
+                        if (currentStatus !== slot.status || currentCar !== newCar || currentSession !== newSession || currentEntryTime !== newEntryTime) {
+                            // Check if slot transitioned from RESERVED to OCCUPIED (e.g. mobile QR scan)
+                            if (currentStatus === 'reserved' && slot.status === 'occupied') {
+                                showEntryConfirmedToast(slot.id, newCar, newEntryTime);
+                            }
+
+                            // Trigger status change highlight glow
+                            if (currentStatus && currentStatus !== slot.status) {
+                                tile.classList.add('slot-status-changed');
+                                setTimeout(() => {
+                                    tile.classList.remove('slot-status-changed');
+                                }, 1100);
+                            }
+
+                            tile.setAttribute('data-status', slot.status);
+                            tile.setAttribute('data-car', newCar);
+                            tile.setAttribute('data-session-id', newSession);
+                            tile.setAttribute('data-entry-time', newEntryTime);
+                            tile.className = `slot-tile ${slot.status}`;
+
+                            if (slot.status === 'reserved' && newSession) {
+                                tile.title = `Slot ${slot.id}: RESERVED (${newCar}) - Click to view QR Pass`;
+                                tile.innerHTML = `
+                                    <div class="slot-tile-header">
+                                        <span class="slot-status-dot"></span>
+                                        <span class="slot-id">${slot.id}</span>
+                                    </div>
+                                    <div class="slot-vehicle-badge" title="${newCar}">${newCar}</div>
+                                    <div class="slot-hover-action">↳ OPEN QR PASS</div>
+                                `;
+                            } else if (slot.status === 'occupied') {
+                                tile.title = `Slot ${slot.id}: OCCUPIED (${newCar}) - Click to view Vehicle Details`;
+                                tile.innerHTML = `
+                                    <div class="slot-tile-header">
+                                        <span class="slot-status-dot"></span>
+                                        <span class="slot-id">${slot.id}</span>
+                                    </div>
+                                    <div class="slot-vehicle-badge" title="${newCar}">${newCar}</div>
+                                    <div class="slot-hover-action">↳ VIEW DETAILS</div>
+                                `;
+                            } else if (newCar) {
+                                tile.title = `Slot ${slot.id}: ${slot.status.toUpperCase()} (${newCar})`;
+                                tile.innerHTML = `
+                                    <div class="slot-tile-header">
+                                        <span class="slot-status-dot"></span>
+                                        <span class="slot-id">${slot.id}</span>
+                                    </div>
+                                    <div class="slot-vehicle-badge" title="${newCar}">${newCar}</div>
+                                `;
+                            } else {
+                                tile.title = `Slot ${slot.id}: AVAILABLE`;
+                                tile.innerHTML = `
+                                    <div class="slot-tile-header">
+                                        <span class="slot-status-dot"></span>
+                                        <span class="slot-id">${slot.id}</span>
+                                    </div>
+                                    <div class="slot-state-label">AVAILABLE</div>
+                                `;
+                            }
+
+                            // Dynamic update for currently open modal
+                            if (currentlyOpenModalSlotId === slot.id) {
+                                if (slot.status === 'occupied') {
+                                    const modalCarVal = document.getElementById('modalCarVal');
+                                    const modalEntryTimeVal = document.getElementById('modalEntryTimeVal');
+                                    const modalExitCarInput = document.getElementById('modalExitCarInput');
+                                    if (modalCarVal) modalCarVal.textContent = newCar || 'N/A';
+                                    if (modalEntryTimeVal) modalEntryTimeVal.textContent = newEntryTime || 'Active Session';
+                                    if (modalExitCarInput) modalExitCarInput.value = newCar;
+                                } else {
+                                    closeOccupiedModal();
+                                }
+                            }
+                        }
+                    });
+
+                    // Re-apply active filter and search to newly updated data
+                    applyMatrixFilter();
+                }
+
+                // 7. Briefly flash sync status in telemetry widget
+                const syncVal = document.getElementById('syncStatusVal');
+                if (syncVal) {
+                    syncVal.textContent = 'SYNCED';
+                    setTimeout(() => {
+                        if (syncVal) syncVal.textContent = 'LIVE (3s)';
+                    }, 1200);
+                }
+
+            } catch (err) {
+                console.warn('Dashboard background sync status:', err);
+                const syncVal = document.getElementById('syncStatusVal');
+                if (syncVal) {
+                    syncVal.textContent = 'RETRYING...';
+                    syncVal.className = 'tele-val';
+                }
+            }
+        }
+
+        // Delegated Click Handler for Clickable RESERVED Slots & OCCUPIED Slots
+        document.addEventListener('click', function (e) {
+            // Reserved Slot Click -> Existing QR Page
+            const reservedTile = e.target.closest('.slot-tile.reserved');
+            if (reservedTile) {
+                const sessionId = reservedTile.getAttribute('data-session-id');
+                if (sessionId) {
+                    window.location.href = `/qr/${sessionId}`;
+                }
+                return;
+            }
+
+            // Occupied Slot Click -> Vehicle Details Modal
+            const occupiedTile = e.target.closest('.slot-tile.occupied');
+            if (occupiedTile) {
+                const slotId = occupiedTile.getAttribute('data-slot-id') || '';
+                const carNumber = occupiedTile.getAttribute('data-car') || '';
+                const entryTime = occupiedTile.getAttribute('data-entry-time') || '';
+                openOccupiedModal(slotId, carNumber, entryTime);
+                return;
+            }
+        });
+
+        // Start Real-Time 3-Second Polling interval (Safe, non-destructive AJAX)
+        setInterval(updateDashboardData, 3000);
+    </script>
 </body>
 
 </html>
