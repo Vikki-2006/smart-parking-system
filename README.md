@@ -1,40 +1,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div align="center">
-
 # 🚗 Smart Parking System
 
 ### Intelligent Parking Management System
